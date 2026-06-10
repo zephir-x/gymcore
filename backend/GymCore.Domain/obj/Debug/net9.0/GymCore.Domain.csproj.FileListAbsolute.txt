@@ -1,0 +1,11 @@
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\bin\Debug\net9.0\GymCore.Domain.deps.json
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\bin\Debug\net9.0\GymCore.Domain.dll
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\bin\Debug\net9.0\GymCore.Domain.pdb
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\GymCore.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\GymCore.Domain.AssemblyInfoInputs.cache
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\GymCore.Domain.AssemblyInfo.cs
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\GymCore.Domain.csproj.CoreCompileInputs.cache
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\GymCore.Domain.dll
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\refint\GymCore.Domain.dll
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\GymCore.Domain.pdb
+C:\Users\kacpe\RiderProjects\gymcore\backend\GymCore.Domain\obj\Debug\net9.0\ref\GymCore.Domain.dll
