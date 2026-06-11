@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GymCore.Domain\GymCore.Domain.csproj" />
     <ProjectReference Include="..\GymCore.Infrastructure\GymCore.Infrastructure.csproj" />
+    <ProjectReference Include="..\GymCore.Application\GymCore.Application.csproj" />
   </ItemGroup>
 
 </Project>

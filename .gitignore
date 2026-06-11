@@ -1,3 +1,5 @@
 ﻿.env
 .idea/
 *.sln.DotSettings.user
+[Bb]in/
+[Oo]bj/
