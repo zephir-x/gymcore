@@ -1,0 +1,21 @@
+﻿### Get subscription tiers and save the first ID
+GET {{host}}/api/subscriptions/tiers
+Authorization: Bearer {{userToken}}
+Accept: application/json
+
+> {%
+    if (response.status === 200 && response.body.length > 0) {
+        client.global.set("tierId", response.body[0].id);
+        client.log("Saved Tier ID: " + response.body[0].id);
+    }
+%}
+
+### Purchase the Premium Subscription
+POST {{host}}/api/subscriptions/purchase/{{tierId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+### Check my current active subscription
+GET {{host}}/api/subscriptions/my-subscription
+Authorization: Bearer {{userToken}}
+Accept: application/json

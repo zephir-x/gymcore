@@ -26,6 +26,13 @@ namespace GymCore.Application.Features.Bookings.Commands.BookClass
             if (groupClass.Reservations.Any(r => r.UserId == request.UserId && r.Status != ReservationStatus.Cancelled))
                 throw new Exception("You are already booked for this class.");
 
+            // Does the user have an active pass?
+            var hasActiveSubscription = await context.UserSubscriptions
+                .AnyAsync(s => s.UserId == request.UserId && s.Status == SubscriptionStatus.Active, cancellationToken);
+
+            if (!hasActiveSubscription)
+                throw new Exception("You must have an active subscription to book a class.");
+            
             // Are there any seats available?
             var currentBookingsCount = groupClass.Reservations.Count(r => r.Status == ReservationStatus.Confirmed);
             // Let's say our Room entity has a Capacity field - if you have it in GroupClass, change it accordingly

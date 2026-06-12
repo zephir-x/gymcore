@@ -1,0 +1,42 @@
+﻿### User Register
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "jan.kowalski@gmail.com",
+  "password": "SuperSecretPassword123!",
+  "firstName": "Jan",
+  "lastName": "Kowalski"
+}
+
+### User Login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jan.kowalski@gmail.com",
+  "password": "SuperSecretPassword123!"
+}
+
+> {%
+    if (response.status === 200) {
+        client.global.set("userToken", response.body.token);
+        client.log("Jan's token saved to the userToken variable.");
+    }
+%}
+
+### Admin Login (created by seeding)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "Admin123!"
+}
+
+> {%
+    if (response.status === 200) {
+        client.global.set("adminToken", response.body.token);
+        client.log("Admin's token saved to the adminToken variable.");
+    }
+%}

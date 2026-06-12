@@ -1,0 +1,19 @@
+﻿### Test 1: Try to create a room as a normal User (Should return 403 Forbidden)
+POST {{host}}/api/admin/rooms
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "name": "Yoga Studio",
+  "capacity": 15
+}
+
+### Test 2: Try to create a room as an Admin (Should return 200 OK)
+POST {{host}}/api/admin/rooms
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Yoga Studio",
+  "capacity": 15
+}

@@ -1,0 +1,30 @@
+﻿### Download a list of available classes and save the first class ID for booking
+GET {{host}}/api/bookings/classes
+Authorization: Bearer {{userToken}}
+Accept: application/json
+
+> {%
+    if (response.status === 200 && response.body.length > 0) {
+        client.global.set("classId", response.body[0].id);
+        client.log("Saved Class ID: " + response.body[0].id);
+    }
+%}
+
+### Book the Morning Crossfit class
+POST {{host}}/api/bookings/classes/{{classId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+### Protected Profile Check
+GET {{host}}/api/auth/profile
+Authorization: Bearer {{userToken}}
+
+### Download a list of available classes
+GET {{host}}/api/bookings/classes
+Authorization: Bearer {{userToken}}
+Accept: application/json
+
+### Get my reservations
+GET {{host}}/api/bookings/my-reservations
+Authorization: Bearer {{userToken}}
+Accept: application/json

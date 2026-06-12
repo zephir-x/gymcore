@@ -15,6 +15,13 @@ namespace GymCore.Infrastructure.Data
                 return;
             }
 
+            // Create the Super Admin
+            var admin = new User("admin@gmail.com", passwordHasher.Hash("Admin123!"), UserRole.Admin);
+            var adminDetails = new UserDetails(admin.Id, "Kacper", "Gumulak");
+            
+            context.Users.Add(admin);
+            context.UserDetails.Add(adminDetails);
+            
             // We are creating a Trainer
             var coach = new User("coach@gmail.com", passwordHasher.Hash("Coach123!"), UserRole.Coach);
             var coachDetails = new UserDetails(coach.Id, "Mariusz", "Pudzianowski");
@@ -22,10 +29,14 @@ namespace GymCore.Infrastructure.Data
             context.Users.Add(coach);
             context.UserDetails.Add(coachDetails);
 
-            // 2. Tworzymy Salę
+            // We are creating a room
             var room = new Room("Crossfit Zone", 20); // The physical capacity of the room is 20 people
             context.Rooms.Add(room);
 
+            // Create a Subscription Tier
+            var premiumTier = new SubscriptionTier("Premium Pass", 149.99m);
+            context.SubscriptionTiers.Add(premiumTier);
+            
             // We create one class for tomorrow
             var tomorrow = DateTime.UtcNow.AddDays(1).Date;
             var groupClass = new GroupClass(
