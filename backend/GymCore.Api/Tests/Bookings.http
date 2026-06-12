@@ -1,4 +1,20 @@
-﻿### Download a list of available classes and save the first class ID for booking
+﻿### Download available windows for a specific coach
+GET {{host}}/api/bookings/coaches/{{coachId}}/slots
+Authorization: Bearer {{userToken}}
+
+> {%
+    if (response.status === 200 && response.body.length > 0) {
+        client.global.set("slotId", response.body[0].id);
+        client.log("Saved Slot ID: " + response.body[0].id);
+    }
+%}
+
+### Book a slot as a member
+POST {{host}}/api/bookings/trainer-slots/{{slotId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+### Download a list of available classes and save the first class ID for booking
 GET {{host}}/api/bookings/classes
 Authorization: Bearer {{userToken}}
 Accept: application/json
@@ -15,6 +31,12 @@ POST {{host}}/api/bookings/classes/{{classId}}
 Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
+> {%
+    if (response.status === 200) {
+        client.global.set("reservationId", response.body.reservationId);
+    }
+%}
+
 ### Protected Profile Check
 GET {{host}}/api/auth/profile
 Authorization: Bearer {{userToken}}
@@ -28,3 +50,7 @@ Accept: application/json
 GET {{host}}/api/bookings/my-reservations
 Authorization: Bearer {{userToken}}
 Accept: application/json
+
+### Cancel a reservation
+DELETE {{host}}/api/bookings/reservations/{{reservationId}}
+Authorization: Bearer {{userToken}}

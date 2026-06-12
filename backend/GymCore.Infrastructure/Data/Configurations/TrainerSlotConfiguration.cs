@@ -21,6 +21,9 @@ namespace GymCore.Infrastructure.Data.Configurations
                 .WithMany()
                 .HasForeignKey(x => x.ClientId)
                 .OnDelete(DeleteBehavior.SetNull); // If we remove the client, the slot remains but goes back to being empty
+            
+            // Optimistic concurrency lock
+            builder.Property<uint>("Version").IsRowVersion();
         }
     }
 }

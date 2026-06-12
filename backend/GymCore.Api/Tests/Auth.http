@@ -25,6 +25,22 @@ Content-Type: application/json
     }
 %}
 
+### Coach Login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "coach@gmail.com",
+  "password": "Coach123!"
+}
+
+> {%
+    if (response.status === 200) {
+        client.global.set("coachToken", response.body.token);
+        client.log("Coach token saved to the coachToken variable.");
+    }
+%}
+
 ### Admin Login (created by seeding)
 POST {{host}}/api/auth/login
 Content-Type: application/json

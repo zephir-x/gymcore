@@ -25,6 +25,9 @@ namespace GymCore.Domain.Entities
         // When a coach creates a slot, it's immediately available and has no client
         public TrainerSlot(Guid coachId, DateTime startTime, DateTime endTime)
         {
+            if (endTime <= startTime)
+                throw new ArgumentException("End time must be after start time.");
+            
             CoachId = coachId;
             StartTime = startTime;
             EndTime = endTime;
@@ -36,32 +39,32 @@ namespace GymCore.Domain.Entities
         public void Book(Guid clientId)
         {
             // We can only book a slot that is currently open
-            if (Status == SlotStatus.Available)
-            {
-                ClientId = clientId;
-                Status = SlotStatus.Booked;
-                Update();
-            }
+            if (Status != SlotStatus.Available)
+                throw new Exception("This slot is no longer available.");
+            
+            ClientId = clientId;
+            Status = SlotStatus.Booked;
+            Update();
         }
 
         public void Cancel()
         {
             // Both Available (coach takes a day off) and Booked (client/coach cancels) slots can be cancelled
-            if (Status != SlotStatus.Cancelled && Status != SlotStatus.Completed)
-            {
-                Status = SlotStatus.Cancelled;
-                // Note: We deliberately don't clear the ClientId here
-                Update();
-            }
+            if (Status == SlotStatus.Cancelled || Status == SlotStatus.Completed)
+                throw new Exception($"Cannot cancel a slot that is already {Status}.");
+            
+            Status = SlotStatus.Cancelled;
+            // Note: We deliberately don't clear the ClientId here
+            Update();
         }
         
         public void MarkAsCompleted()
         {
-            if (Status == SlotStatus.Booked)
-            {
-                Status = SlotStatus.Completed;
-                Update();
-            }
+            if (Status != SlotStatus.Booked)
+                throw new Exception("Only booked slots can be marked as completed.");
+            
+            Status = SlotStatus.Completed;
+            Update();
         }
     }
 }

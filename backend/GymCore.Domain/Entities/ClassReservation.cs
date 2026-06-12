@@ -27,11 +27,11 @@ namespace GymCore.Domain.Entities
         // Status transition methods ensure the state changes deliberately, not by random assignments from outside
         public void Cancel()
         {
-            if (Status != ReservationStatus.Cancelled)
-            {
-                Status = ReservationStatus.Cancelled;
-                Update();
-            }
+            if (Status == ReservationStatus.Cancelled)
+                throw new Exception("Reservation is already cancelled.");
+                
+            Status = ReservationStatus.Cancelled;
+            Update();
         }
 
         public void PromoteFromWaitlist()

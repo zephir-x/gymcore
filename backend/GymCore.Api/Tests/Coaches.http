@@ -1,0 +1,19 @@
+﻿### Create a new training slot (As Coach)
+POST {{host}}/api/coaches/slots
+Authorization: Bearer {{coachToken}}
+Content-Type: application/json
+
+{
+  "startTime": "2026-08-10T10:00:00Z",
+  "endTime": "2026-08-10T11:00:00Z"
+}
+
+### Try to create overlapping slot (Should return 500 Business Error)
+POST {{host}}/api/coaches/slots
+Authorization: Bearer {{coachToken}}
+Content-Type: application/json
+
+{
+  "startTime": "2026-08-10T10:30:00Z",
+  "endTime": "2026-08-10T11:30:00Z"
+}

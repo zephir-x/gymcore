@@ -1,4 +1,4 @@
-﻿### Test 1: Try to create a room as a normal User (Should return 403 Forbidden)
+﻿### Try to create a room as a normal User (Should return 403 Forbidden)
 POST {{host}}/api/admin/rooms
 Authorization: Bearer {{userToken}}
 Content-Type: application/json
@@ -8,7 +8,7 @@ Content-Type: application/json
   "capacity": 15
 }
 
-### Test 2: Try to create a room as an Admin (Should return 200 OK)
+### Try to create a room as an Admin (Should return 200 OK)
 POST {{host}}/api/admin/rooms
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
@@ -16,4 +16,38 @@ Content-Type: application/json
 {
   "name": "Yoga Studio",
   "capacity": 15
+}
+
+### Download coaches and save ID
+GET {{host}}/api/admin/coaches
+Authorization: Bearer {{adminToken}}
+
+> {%
+    if (response.status === 200 && response.body.length > 0) {
+        client.global.set("coachId", response.body[0].id);
+    }
+%}
+
+### Download rooms and save ID
+GET {{host}}/api/admin/rooms
+Authorization: Bearer {{adminToken}}
+
+> {%
+    if (response.status === 200 && response.body.length > 0) {
+        client.global.set("roomId", response.body[0].id);
+    }
+%}
+
+### Create a new Group Class as Admin
+POST {{host}}/api/admin/classes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Evening Yoga",
+  "coachId": "{{coachId}}",
+  "roomId": "{{roomId}}",
+  "startTime": "2026-07-01T18:00:00Z",
+  "endTime": "2026-07-01T19:00:00Z",
+  "maxAttendees": 10
 }

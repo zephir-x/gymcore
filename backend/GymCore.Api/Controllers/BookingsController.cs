@@ -39,6 +39,28 @@ namespace GymCore.Api.Controllers
             return Ok(new { Message = "Successfully booked the class!", ReservationId = reservationId });
         }
         
+        [HttpGet("coaches/{coachId}/slots")]
+        public async Task<IActionResult> GetAvailableTrainerSlots(Guid coachId)
+        {
+            var query = new Application.Features.Bookings.Queries.GetAvailableTrainerSlots.GetAvailableTrainerSlotsQuery(coachId);
+            var slots = await sender.Send(query);
+            
+            return Ok(slots);
+        }
+
+        [HttpPost("trainer-slots/{slotId}")]
+        public async Task<IActionResult> BookTrainerSlot(Guid slotId)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId))
+                return Unauthorized("Invalid user token.");
+
+            var command = new Application.Features.Bookings.Commands.BookTrainerSlot.BookTrainerSlotCommand(slotId, userId);
+            await sender.Send(command);
+
+            return Ok(new { Message = "Personal training session booked successfully." });
+        }
+        
         [HttpGet("my-reservations")]
         public async Task<IActionResult> GetMyReservations()
         {
@@ -52,6 +74,21 @@ namespace GymCore.Api.Controllers
             var reservations = await sender.Send(query);
             
             return Ok(reservations);
+        }
+        
+        [HttpDelete("reservations/{reservationId}")]
+        public async Task<IActionResult> CancelReservation(Guid reservationId)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (!Guid.TryParse(userIdString, out var userId))
+                return Unauthorized("Invalid user token.");
+
+            var command = new Application.Features.Bookings.Commands.CancelReservation.CancelReservationCommand(reservationId, userId);
+            
+            await sender.Send(command);
+
+            return Ok(new { Message = "Reservation cancelled successfully." });
         }
     }
 }

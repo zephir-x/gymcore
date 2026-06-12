@@ -5,6 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Bookings.Queries.GetAvailableClasses
 {
+    // Clean, lightweight object sent to Frontend
+    public record GroupClassDto(
+        Guid Id,
+        string Name,
+        DateTime StartTime,
+        DateTime EndTime,
+        int MaxAttendees,
+        int CurrentBookings
+    );
+    
     // Query does not accept parameters (we may add date filters in the future)
     public record GetAvailableClassesQuery() : IRequest<List<GroupClassDto>>;
 
