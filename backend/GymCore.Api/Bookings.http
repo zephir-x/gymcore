@@ -1,0 +1,12 @@
+﻿@host = http://localhost:5119
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzOGVhMDU3MC00OGNhLTRhMGQtOTFjNC0yZjNhMjgyY2EzZWIiLCJlbWFpbCI6Imphbi5rb3dhbHNraUBnbWFpbC5jb20iLCJyb2xlIjoiTWVtYmVyIiwiZXhwIjoxNzgxMjc4MjgxLCJpc3MiOiJHeW1Db3JlIiwiYXVkIjoiR3ltQ29yZVVzZXJzIn0.j5t3d7V-LVKiFgdFfu1pY26bO_6HUp3axJM4dVOeh8Y
+@classId = e837a3c9-f163-4bda-856b-f25f961c8eb9
+
+### Book the Morning Crossfit class
+POST {{host}}/api/bookings/classes/{{classId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### Protected Profile Check
+GET {{host}}/api/auth/profile
+Authorization: Bearer {{token}}

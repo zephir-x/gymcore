@@ -1,8 +1,11 @@
+using System.Text;
 using FluentValidation;
 using GymCore.Application.Common.Behaviors;
 using Microsoft.EntityFrameworkCore;
 using GymCore.Infrastructure.Data;
 using GymCore.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,26 @@ builder.Services.AddScoped<IApplicationDbContext>(provider =>
 
 // Password Hasher Registration
 builder.Services.AddSingleton<IPasswordHasher, GymCore.Infrastructure.Identity.PasswordHasher>();
+
+// JWT Token Generator Registration
+builder.Services.AddSingleton<IJwtTokenGenerator, GymCore.Infrastructure.Identity.JwtTokenGenerator>();
+
+// JWT Authentication Registration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true, // Checks if the token has not expired
+            ValidateIssuerSigningKey = true, // Verifies the signature (whether no one has forged the token)
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+        };
+    });
+
+builder.Services.AddAuthorization(); // Registers services that allow the use of the [Authorize] attribute
 
 // We automatically register all validators from the Application project
 builder.Services.AddValidatorsFromAssembly(typeof(IApplicationDbContext).Assembly);
@@ -41,6 +64,19 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+// Seeding the database
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    
+    // Automatic migration application at application startup
+    await context.Database.MigrateAsync(); 
+    
+    // We are launching Seeder
+    await DatabaseSeeder.SeedAsync(context, passwordHasher);
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -48,6 +84,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication(); // Checks who you are (decodes the token)
+app.UseAuthorization();  // Checks if you have permissions to this endpoint
 
 // We map HTTP paths to our Controllers
 app.MapControllers();

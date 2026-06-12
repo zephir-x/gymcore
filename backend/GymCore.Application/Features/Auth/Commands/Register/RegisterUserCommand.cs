@@ -1,10 +1,6 @@
 ﻿using GymCore.Application.Common.Interfaces;
 using GymCore.Domain.Entities;
-using GymCore.Domain.Enums;
 using MediatR;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Auth.Commands.Register
@@ -17,22 +13,15 @@ namespace GymCore.Application.Features.Auth.Commands.Register
         string LastName) : IRequest<Guid>;
 
     // 2. How do we execute the command?
-    public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Guid>
+    public class RegisterUserCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
+        : IRequestHandler<RegisterUserCommand, Guid>
     {
-        private readonly IApplicationDbContext _context;
-        private readonly IPasswordHasher _passwordHasher;
-
         // Injecting our database context and password hasher
-        public RegisterUserCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
-        {
-            _context = context;
-            _passwordHasher = passwordHasher;
-        }
 
         public async Task<Guid> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
         {
             // Check if email already exists
-            var emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken);
+            var emailExists = await context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken);
             if (emailExists)
             {
                 // We will upgrade this to a custom ValidationException soon, but this is a solid start
@@ -40,19 +29,19 @@ namespace GymCore.Application.Features.Auth.Commands.Register
             }
             
             // Hashing the password
-            var hashedPassword = _passwordHasher.Hash(request.Password);
+            var hashedPassword = passwordHasher.Hash(request.Password);
 
             // Create the domain entity with the securely hashed password
-            var user = new User(request.Email, hashedPassword, UserRole.Member);
+            var user = new User(request.Email, hashedPassword);
 
             // Create related details
             var userDetails = new UserDetails(user.Id, request.FirstName, request.LastName);
 
-            _context.Users.Add(user);
-            _context.UserDetails.Add(userDetails);
+            context.Users.Add(user);
+            context.UserDetails.Add(userDetails);
 
             // Save transaction to PostgreSQL
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
 
             return user.Id;
         }

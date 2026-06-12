@@ -1,5 +1,4 @@
-﻿using System;
-using GymCore.Domain.Common;
+﻿using GymCore.Domain.Common;
 
 namespace GymCore.Domain.Entities
 {
@@ -18,14 +17,16 @@ namespace GymCore.Domain.Entities
         // Important: Business logic must ensure this doesn't exceed the Room's MaxCapacity
         public int MaxAttendees { get; private set; }
         
-        // The secret sauce for Optimistic Locking. EF Core uses this byte array under the hood 
-        // to prevent overbooking when two users click "Book" at the exact same millisecond
-        public byte[] RowVersion { get; private set; }
-        
         // Navigation properties for EF Core relationship mapping
         public User Coach { get; private set; }
         public Room Room { get; private set; }
 
+        // Private backing field for reservations to protect the collection
+        private readonly List<ClassReservation> _reservations = new();
+        
+        // Public read-only access for EF Core and our business logic
+        public IReadOnlyCollection<ClassReservation> Reservations => _reservations.AsReadOnly();
+        
         protected GroupClass() { }
 
         public GroupClass(string name, Guid coachId, Guid roomId, DateTime startTime, DateTime endTime, int maxAttendees)

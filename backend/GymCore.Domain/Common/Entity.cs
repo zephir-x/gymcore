@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GymCore.Domain.Common
+﻿namespace GymCore.Domain.Common
 {
     public abstract class Entity
     {

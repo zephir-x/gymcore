@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using FluentValidation.Results;
+﻿using FluentValidation.Results;
 
 namespace GymCore.Application.Common.Exceptions
 {
     // Custom exception to hold nicely formatted validation errors
-    public class ValidationException : Exception
+    public class ValidationException() : Exception("One or more validation failures have occurred.")
     {
-        public IDictionary<string, string[]> Errors { get; }
-
-        public ValidationException() : base("One or more validation failures have occurred.")
-        {
-            Errors = new Dictionary<string, string[]>();
-        }
+        private IDictionary<string, string[]> Errors { get; } = new Dictionary<string, string[]>();
 
         public ValidationException(IEnumerable<ValidationFailure> failures) : this()
         {
@@ -24,7 +17,7 @@ namespace GymCore.Application.Common.Exceptions
 
                 if (!Errors.ContainsKey(propertyName))
                 {
-                    Errors[propertyName] = new[] { errorMessage };
+                    Errors[propertyName] = [errorMessage];
                 }
                 else
                 {

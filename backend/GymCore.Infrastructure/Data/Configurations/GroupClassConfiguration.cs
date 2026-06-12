@@ -9,13 +9,14 @@ namespace GymCore.Infrastructure.Data.Configurations
         public void Configure(EntityTypeBuilder<GroupClass> builder)
         {
             builder.ToTable("GroupClasses");
-            builder.HasKey(x => x.Id);
-
-            builder.Property(x => x.Name).IsRequired().HasMaxLength(150);
             
             // EF Core will automatically update this field on every save
             // If two users try to save a change based on the same version, the second one will get an error (DbUpdateConcurrencyException)
-            builder.Property(x => x.RowVersion).IsRowVersion();
+            builder.Property<uint>("Version").IsRowVersion();
+            
+            builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Name).IsRequired().HasMaxLength(150);
 
             builder.HasOne(x => x.Coach)
                 .WithMany()
@@ -26,6 +27,15 @@ namespace GymCore.Infrastructure.Data.Configurations
                 .WithMany()
                 .HasForeignKey(x => x.RoomId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Report for reservation
+            builder.HasMany(x => x.Reservations)
+                .WithOne(r => r.GroupClass)
+                .HasForeignKey(r => r.GroupClassId) 
+                .OnDelete(DeleteBehavior.Restrict); 
+
+            // We tell EF Core to save reservations directly to the private _reservations field
+            builder.Navigation(x => x.Reservations).UsePropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }

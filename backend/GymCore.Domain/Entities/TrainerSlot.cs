@@ -1,5 +1,4 @@
-﻿using System;
-using GymCore.Domain.Common;
+﻿using GymCore.Domain.Common;
 using GymCore.Domain.Enums;
 
 namespace GymCore.Domain.Entities
