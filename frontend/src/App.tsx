@@ -3,6 +3,7 @@ import Home from "./pages/Home"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
+import Subscriptions from "./pages/Subscriptions"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { Toaster } from "@/components/ui/sonner"
 
@@ -27,7 +28,10 @@ const router = createBrowserRouter([
                 path: "/dashboard",
                 element: <Dashboard />,
             },
-            // In the future we will put here e.g. /classes, /admin-panel etc.
+            {
+                path: "/subscriptions",
+                element: <Subscriptions />,
+            },
         ],
     },
     {
