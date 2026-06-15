@@ -21,6 +21,10 @@ const registerSchema = z.object({
         .regex(/[a-z]/, "The password must contain at least one lowercase letter.")
         .regex(/[0-9]/, "The password must contain at least one number.")
         .regex(/[^a-zA-Z0-9]/, "The password must contain at least one special character (e.g. !, @, #)."),
+    confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "The passwords are not identical.",
+    path: ["confirmPassword"],
 })
 
 type RegisterFormValues = z.infer<typeof registerSchema>
@@ -36,6 +40,7 @@ export default function Register() {
             lastName: "",
             email: "",
             password: "",
+            confirmPassword: "",
         },
     })
 
@@ -129,6 +134,18 @@ export default function Register() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Password</FormLabel>
+                                        <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Confirm password</FormLabel>
                                         <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>

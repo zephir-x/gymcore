@@ -5,9 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Subscriptions.Queries.GetMySubscription
 {
+    public record MySubscriptionDto(
+        Guid SubscriptionId, 
+        string TierName, 
+        DateTime StartDate, 
+        DateTime EndDate, 
+        string Status);
+    
     // We return a DTO, but it may be nullable (if the user does not have a subscription)
     public record GetMySubscriptionQuery(Guid UserId) : IRequest<MySubscriptionDto?>;
-
+    
     public class GetMySubscriptionQueryHandler(IApplicationDbContext context)
         : IRequestHandler<GetMySubscriptionQuery, MySubscriptionDto?>
     {

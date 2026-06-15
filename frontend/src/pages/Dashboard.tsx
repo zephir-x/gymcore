@@ -1,7 +1,20 @@
-﻿import { useQuery } from "@tanstack/react-query"
+﻿import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
+import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +34,10 @@ interface Reservation {
 
 export default function Dashboard() {
     const { user } = useAuth()
+    const queryClient = useQueryClient()
+
+    // UI State for expanding the manage subscription options
+    const [isManaging, setIsManaging] = useState(false)
 
     // Fetch subscription data
     const { data: subscription, isLoading: isSubLoading } = useQuery<Subscription | null>({
@@ -30,13 +47,11 @@ export default function Dashboard() {
                 const response = await api.get('/api/subscriptions/my-subscription')
                 return response.data
             } catch (error: any) {
-                // If the backend returns 404 (no active subscription), we don't treat it as an error
-                // that breaks the page - we simply return null to display the correct UI state
                 if (error.response?.status === 404) return null
                 throw error
             }
         },
-        retry: false // Do not retry if it's a 404
+        retry: false
     })
 
     // Fetch user reservations
@@ -45,6 +60,27 @@ export default function Dashboard() {
         queryFn: async () => {
             const response = await api.get('/api/bookings/my-reservations')
             return response.data
+        }
+    })
+
+    // Handle cancelling the subscription
+    const cancelMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.post('/api/subscriptions/cancel')
+            return response.data
+        },
+        onSuccess: async () => {
+            toast.success("Subscription Cancelled", {
+                description: "Your active subscription has been cancelled."
+            })
+            // Force Dashboard to refresh the subscription data immediately
+            await queryClient.invalidateQueries({ queryKey: ['my-subscription'] })
+            setIsManaging(false) // Close the manage menu after success
+        },
+        onError: (error: any) => {
+            toast.error("Action Failed", {
+                description: error.response?.data?.Message || "Could not cancel the subscription."
+            })
         }
     })
 
@@ -78,7 +114,52 @@ export default function Dashboard() {
                                         <p className="font-bold text-lg">Active: {subscription.tierName}</p>
                                         <p className="text-sm">Valid until: {new Date(subscription.endDate).toLocaleDateString()}</p>
                                     </div>
-                                    <Button variant="outline" className="w-full">Manage subscription</Button>
+
+                                    {/* Manage Subscription UI */}
+                                    {!isManaging ? (
+                                        <Button variant="outline" className="w-full" onClick={() => setIsManaging(true)}>
+                                            Manage subscription
+                                        </Button>
+                                    ) : (
+                                        <div className="flex flex-col gap-2 p-4 bg-slate-100 rounded-lg border border-slate-200">
+                                            <p className="text-sm font-semibold mb-2">Options</p>
+                                            <Button variant="outline" className="w-full">
+                                                Upgrade Plan
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button
+                                                        variant="destructive"
+                                                        className="w-full"
+                                                        disabled={cancelMutation.isPending}
+                                                    >
+                                                        {cancelMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. Your subscription will be cancelled, and you will lose access to premium benefits immediately.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Keep it</AlertDialogCancel>
+                                                        { /* The mutation will only be triggered after clicking the red confirmation button */ }
+                                                        <AlertDialogAction
+                                                            onClick={() => cancelMutation.mutate()}
+                                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                        >
+                                                            Yes, cancel it
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                            <Button variant="ghost" className="w-full text-slate-500" onClick={() => setIsManaging(false)}>
+                                                Close
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="space-y-4">

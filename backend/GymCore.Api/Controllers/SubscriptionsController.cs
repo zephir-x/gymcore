@@ -1,6 +1,8 @@
 ﻿using System.Security.Claims;
 using GymCore.Application.Features.Subscriptions.Commands.BuySubscription;
+using GymCore.Application.Features.Subscriptions.Commands.CancelSubscription;
 using GymCore.Application.Features.Subscriptions.Queries.GetMySubscription;
+using GymCore.Application.Features.Subscriptions.Queries.GetSubscriptionTiers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,22 +17,34 @@ namespace GymCore.Api.Controllers
         [HttpGet("tiers")]
         public async Task<IActionResult> GetTiers()
         {
-            var tiers = await sender.Send(new Application.Features.Subscriptions.Queries.GetSubscriptionTiers.GetSubscriptionTiersQuery());
+            var tiers = await sender.Send(new GetSubscriptionTiersQuery());
             return Ok(tiers);
         }
         
         [HttpPost("purchase/{tierId}")]
-        public async Task<IActionResult> PurchaseSubscription(Guid tierId)
+        public async Task<IActionResult> PurchaseSubscription(Guid tierId, [FromBody] PurchaseRequest request)
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             if (!Guid.TryParse(userIdString, out var userId))
                 return Unauthorized("Invalid user token.");
 
-            var command = new BuySubscriptionCommand(userId, tierId);
+            var command = new BuySubscriptionCommand(userId, tierId, request.Months);
             var subscriptionId = await sender.Send(command);
 
             return Ok(new { Message = "Subscription purchased successfully!", SubscriptionId = subscriptionId });
+        }
+        
+        [HttpPost("cancel")]
+        public async Task<IActionResult> CancelSubscription()
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId))
+                return Unauthorized("Invalid user token.");
+
+            await sender.Send(new CancelSubscriptionCommand(userId));
+
+            return Ok(new { Message = "Subscription cancelled successfully." });
         }
         
         [HttpGet("my-subscription")]
@@ -51,5 +65,8 @@ namespace GymCore.Api.Controllers
 
             return Ok(subscription);
         }
+        
+        // Small DTO specifically for receiving the JSON payload from React
+        public record PurchaseRequest(int Months);
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GymCore.Application.Features.Subscriptions.Commands.BuySubscription
 {
     // Command takes the User ID (from JWT) and the chosen Tier ID
-    public record BuySubscriptionCommand(Guid UserId, Guid TierId) : IRequest<Guid>;
+    public record BuySubscriptionCommand(Guid UserId, Guid TierId, int Months) : IRequest<Guid>;
 
     public class BuySubscriptionCommandHandler(IApplicationDbContext context)
         : IRequestHandler<BuySubscriptionCommand, Guid>
@@ -26,13 +26,13 @@ namespace GymCore.Application.Features.Subscriptions.Commands.BuySubscription
             if (hasActiveSubscription)
                 throw new Exception("You already have an active subscription.");
 
-            // Create the subscription (Valid for 30 days)
+            // Create the subscription (Calculate exact EndDate based on requested months)
             // Here we assume payment was successful. In a real system, status would be 'PendingPayment'.
             var subscription = new UserSubscription(
                 request.UserId, 
                 request.TierId, 
                 DateTime.UtcNow, 
-                DateTime.UtcNow.AddDays(30));
+                DateTime.UtcNow.AddMonths(request.Months));
 
             context.UserSubscriptions.Add(subscription);
             await context.SaveChangesAsync(cancellationToken);
