@@ -29,7 +29,7 @@ api.interceptors.response.use(
     (error) => {
         // If the server throws 401 Unauthorized (Bad or expired JWT token)
         if (error.response?.status === 401) {
-            console.error("Sesja wygasła. Wylogowywanie...");
+            console.error("Your session has expired. Logging out...");
             localStorage.removeItem('token'); // We remove the fake/old token
             window.location.href = '/login';  // We throw the user to the login screen
         }
