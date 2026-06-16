@@ -10,9 +10,10 @@ namespace GymCore.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize] // Requires a valid JWT token to access any endpoint in this controller
     public class BookingsController(ISender sender) : ControllerBase
     {
+        // Retrieves a list of future group classes available for booking
         [HttpGet("classes")]
         public async Task<IActionResult> GetAvailableClasses()
         {
@@ -22,16 +23,17 @@ namespace GymCore.Api.Controllers
             return Ok(classes);
         }
         
+        // Books a spot in a specific group class for the authenticated user
         [HttpPost("classes/{classId}")]
         public async Task<IActionResult> BookClass(Guid classId)
         {
-            // We securely extract the user ID directly from their token
+            // Securely extract the user ID directly from their JWT token to prevent impersonation
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             if (!Guid.TryParse(userIdString, out var userId))
                 return Unauthorized("Invalid user token.");
 
-            // We create a command by combining data from the URL parameter and the JWT token
+            // Create the command combining route data and authenticated context
             var command = new BookClassCommand(classId, userId);
             
             var reservationId = await sender.Send(command);
@@ -39,6 +41,15 @@ namespace GymCore.Api.Controllers
             return Ok(new { Message = "Successfully booked the class!", ReservationId = reservationId });
         }
         
+        // Retrieves a list of all coaches available for personal training
+        [HttpGet("coaches")]
+        public async Task<IActionResult> GetCoaches()
+        {
+            var coaches = await sender.Send(new Application.Features.Bookings.Queries.GetCoaches.GetCoachesQuery());
+            return Ok(coaches);
+        }
+
+        // Retrieves available 1:1 time slots for a specific coach
         [HttpGet("coaches/{coachId}/slots")]
         public async Task<IActionResult> GetAvailableTrainerSlots(Guid coachId)
         {
@@ -48,6 +59,7 @@ namespace GymCore.Api.Controllers
             return Ok(slots);
         }
 
+        // Books a specific 1:1 training slot with a coach
         [HttpPost("trainer-slots/{slotId}")]
         public async Task<IActionResult> BookTrainerSlot(Guid slotId)
         {
@@ -61,10 +73,10 @@ namespace GymCore.Api.Controllers
             return Ok(new { Message = "Personal training session booked successfully." });
         }
         
+        // Retrieves a unified list of both group classes and personal training sessions booked by the user
         [HttpGet("my-reservations")]
         public async Task<IActionResult> GetMyReservations()
         {
-            // Extract the user ID securely from the JWT claim
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             if (!Guid.TryParse(userIdString, out var userId))
@@ -76,6 +88,7 @@ namespace GymCore.Api.Controllers
             return Ok(reservations);
         }
         
+        // Cancels a user's reservation (handles both group classes and 1:1 slots dynamically)
         [HttpDelete("reservations/{reservationId}")]
         public async Task<IActionResult> CancelReservation(Guid reservationId)
         {

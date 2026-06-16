@@ -47,14 +47,24 @@ namespace GymCore.Domain.Entities
             Update();
         }
 
+        // Customer cancels the service
+        public void Release()
+        {
+            if (Status != SlotStatus.Booked)
+                throw new Exception("Only booked slots can be released.");
+            
+            ClientId = null; // We clear the customer ID
+            Status = SlotStatus.Available; // We're back on the market
+            Update();
+        }
+        
         public void Cancel()
         {
-            // Both Available (coach takes a day off) and Booked (client/coach cancels) slots can be cancelled
+            // Coach takes a day off
             if (Status == SlotStatus.Cancelled || Status == SlotStatus.Completed)
                 throw new Exception($"Cannot cancel a slot that is already {Status}.");
             
             Status = SlotStatus.Cancelled;
-            // Note: We deliberately don't clear the ClientId here
             Update();
         }
         

@@ -1,20 +1,21 @@
 ﻿using GymCore.Application.Common.Interfaces;
+using GymCore.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Bookings.Queries.GetUserReservations
 {
-    // A lightweight object to return the user's booking details
     public record UserReservationDto(
         Guid ReservationId,
-        Guid ClassId,
-        string ClassName,
+        Guid? TargetId,
+        string Title,          // Name of the class or "Personal Training"
+        string TrainerName,
         DateTime StartTime,
         DateTime EndTime,
-        string Status
+        string Status,
+        string Type           // "Group" or "Personal"
     );
     
-    // The query requires the UserId (which we will safely extract from the JWT token)
     public record GetUserReservationsQuery(Guid UserId) : IRequest<List<UserReservationDto>>;
 
     public class GetUserReservationsQueryHandler(IApplicationDbContext context)
@@ -22,20 +23,49 @@ namespace GymCore.Application.Features.Bookings.Queries.GetUserReservations
     {
         public async Task<List<UserReservationDto>> Handle(GetUserReservationsQuery request, CancellationToken cancellationToken)
         {
-            return await context.ClassReservations
+			// We are finding entities from the database
+            var groupReservations = await context.ClassReservations
                 .AsNoTracking()
-                .Where(r => r.UserId == request.UserId)
-                .Include(r => r.GroupClass) // We need to include the class details to show its name and time
-                .OrderBy(r => r.GroupClass.StartTime)
-                .Select(r => new UserReservationDto(
+                .Where(r => r.UserId == request.UserId && r.Status != ReservationStatus.Cancelled)
+                .Include(r => r.GroupClass)
+                .ThenInclude(c => c.Coach)
+                .ThenInclude(u => u.Details)
+                .ToListAsync(cancellationToken);
+
+            var personalReservations = await context.TrainerSlots
+                .AsNoTracking()
+                .Where(s => s.ClientId == request.UserId && s.Status == SlotStatus.Booked) 
+                .Include(s => s.Coach)
+                .ThenInclude(u => u.Details)
+                .ToListAsync(cancellationToken);
+
+            // We map and connect safely in C# memory
+            var allReservations = groupReservations.Select(r => new UserReservationDto(
                     r.Id,
                     r.GroupClass.Id,
                     r.GroupClass.Name,
+                    $"{r.GroupClass.Coach.Details.FirstName} {r.GroupClass.Coach.Details.LastName}",
                     r.GroupClass.StartTime,
                     r.GroupClass.EndTime,
-                    r.Status.ToString() // Convert enum to string for the frontend
+                    r.Status.ToString(),
+                    "Group"
                 ))
-                .ToListAsync(cancellationToken);
+                .Concat(
+                    personalReservations.Select(s => new UserReservationDto(
+                        s.Id,
+                        s.Id,
+                        "Personal Training 1:1",
+                        $"{s.Coach.Details.FirstName} {s.Coach.Details.LastName}",
+                        s.StartTime,
+                        s.EndTime,
+                        "Confirmed",
+                        "Personal"
+                    ))
+                )
+                .OrderBy(r => r.StartTime)
+                .ToList();
+
+            return allReservations;
         }
     }
 }

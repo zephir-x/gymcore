@@ -23,13 +23,18 @@ namespace GymCore.Infrastructure.Identity
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             // Claims are facts about the user embedded directly into the token
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("role", user.Role.ToString()) // Very important for RBAC
             };
 
+            if (user.Details != null)
+            {
+                claims.Add(new Claim("firstName", user.Details.FirstName));
+            }
+            
             var token = new JwtSecurityToken(
                 issuer,
                 audience,

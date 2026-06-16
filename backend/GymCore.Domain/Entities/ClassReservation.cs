@@ -34,6 +34,15 @@ namespace GymCore.Domain.Entities
             Update();
         }
 
+        public void Reactivate()
+        {
+            if (Status == ReservationStatus.Confirmed)
+                throw new Exception("Reservation is already confirmed.");
+                
+            Status = ReservationStatus.Confirmed;
+            Update(); 
+        }
+        
         public void PromoteFromWaitlist()
         {
             // Only a waitlisted reservation can be promoted to a confirmed spot

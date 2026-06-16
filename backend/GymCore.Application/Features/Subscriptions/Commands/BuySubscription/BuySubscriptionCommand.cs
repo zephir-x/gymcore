@@ -14,20 +14,21 @@ namespace GymCore.Application.Features.Subscriptions.Commands.BuySubscription
     {
         public async Task<Guid> Handle(BuySubscriptionCommand request, CancellationToken cancellationToken)
         {
-            // Check if the tier exists
             var tier = await context.SubscriptionTiers.FindAsync([request.TierId], cancellationToken);
             if (tier == null)
                 throw new Exception("Subscription tier not found.");
 
-            // Check if the user already has an active subscription
-            var hasActiveSubscription = await context.UserSubscriptions
-                .AnyAsync(s => s.UserId == request.UserId && s.Status == SubscriptionStatus.Active, cancellationToken);
+            // Instead of throwing an error, get your current subscription
+            var activeSubscription = await context.UserSubscriptions
+                .FirstOrDefaultAsync(s => s.UserId == request.UserId && s.Status == SubscriptionStatus.Active, cancellationToken);
 
-            if (hasActiveSubscription)
-                throw new Exception("You already have an active subscription.");
+            // If you have an active subscription, cancel it (Upgrade/Overwrite)
+            if (activeSubscription != null)
+            {
+                activeSubscription.Cancel();
+            }
 
-            // Create the subscription (Calculate exact EndDate based on requested months)
-            // Here we assume payment was successful. In a real system, status would be 'PendingPayment'.
+            // We create and assign a new one
             var subscription = new UserSubscription(
                 request.UserId, 
                 request.TierId, 

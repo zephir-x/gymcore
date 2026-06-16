@@ -7,17 +7,17 @@ namespace GymCore.Application.Features.Auth.Queries.Login
     // The result object containing both the user ID and the JWT
     public record AuthResult(Guid UserId, string Token);
 
-    // 1. What are we asking for?
+    // What are we asking for?
     public record LoginUserQuery(string Email, string Password) : IRequest<AuthResult>;
 
-    // 2. How do we process the login?
+    // How do we process the login?
     public class LoginUserQueryHandler(IApplicationDbContext context, IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator) : IRequestHandler<LoginUserQuery, AuthResult>
     {
         public async Task<AuthResult> Handle(LoginUserQuery request, CancellationToken cancellationToken)
         {
             // Check if user exists in database
-            var user = await context.Users.SingleOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+            var user = await context.Users.Include(u => u.Details).FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
             // We intentionally throw a generic message so attackers don't know if the email exists
             if (user == null)

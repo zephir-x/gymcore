@@ -12,18 +12,36 @@ namespace GymCore.Application.Features.Bookings.Commands.CancelReservation
     {
         public async Task Handle(CancelReservationCommand request, CancellationToken cancellationToken)
         {
-            var reservation = await context.ClassReservations
+            // First, we check if this is a reservation for a group class
+            var classReservation = await context.ClassReservations
                 .FirstOrDefaultAsync(r => r.Id == request.ReservationId, cancellationToken);
 
-            if (reservation == null)
-                throw new Exception("Reservation not found.");
-            
-            if (reservation.UserId != request.UserId)
-                throw new Exception("You are not authorized to cancel this reservation.");
+            if (classReservation != null)
+            {
+                if (classReservation.UserId != request.UserId)
+                    throw new Exception("You are not authorized to cancel this reservation.");
 
-            reservation.Cancel();
+                classReservation.Cancel();
+                await context.SaveChangesAsync(cancellationToken);
+                return; // Finish successfully
+            }
 
-            await context.SaveChangesAsync(cancellationToken);
+            // If not group, we check if it is personal training (Slot)
+            var trainerSlot = await context.TrainerSlots
+                .FirstOrDefaultAsync(s => s.Id == request.ReservationId, cancellationToken);
+
+            if (trainerSlot != null)
+            {
+                if (trainerSlot.ClientId != request.UserId)
+                    throw new Exception("You are not authorized to cancel this session.");
+
+                trainerSlot.Release();
+                await context.SaveChangesAsync(cancellationToken);
+                return;
+            }
+
+            // If didn't find it anywhere
+            throw new Exception("Reservation not found.");
         }
     }
 }

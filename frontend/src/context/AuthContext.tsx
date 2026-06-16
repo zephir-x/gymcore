@@ -6,6 +6,7 @@ export interface User {
     id: string;
     email: string;
     role: string;
+    firstName?: string
 }
 
 interface AuthContextType {
@@ -23,12 +24,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // A function that maps complex .NET names to a simple object
     const mapTokenToUser = (token: string): User => {
         const decoded: any = jwtDecode(token);
-        
+
         return {
             // We are looking for a long .NET claim, or a short standard "sub"/"nameid"
             id: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.sub || decoded.nameid || '',
             email: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email || '',
             role: decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role || decoded.Role || 'Member',
+            firstName: decoded.firstName
         };
     };
 
