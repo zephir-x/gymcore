@@ -89,6 +89,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication(); // Checks who you are (decodes the token)
 app.UseAuthorization();  // Checks if you have permissions to this endpoint
+app.UseMiddleware<GymCore.Api.Middleware.ActiveUserCheckMiddleware>();
 
 // We map HTTP paths to our Controllers
 app.MapControllers();

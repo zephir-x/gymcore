@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Auth.Commands.Register
 {
-    // 1. What do we want to do? (We return the Guid - i.e. the ID of the newly created user)
+    // What do we want to do? (We return the Guid - i.e. the ID of the newly created user)
     public record RegisterUserCommand(
         string Email, 
         string Password,
         string FirstName, 
         string LastName) : IRequest<Guid>;
 
-    // 2. How do we execute the command?
+    // How do we execute the command?
     public class RegisterUserCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
         : IRequestHandler<RegisterUserCommand, Guid>
     {

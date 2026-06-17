@@ -25,6 +25,12 @@ namespace GymCore.Application.Features.Auth.Queries.Login
                 throw new Exception("Invalid email or password.");
             }
 
+            // Protection against banned/disabled users
+            if (!user.IsActive)
+            {
+                throw new Exception("Account disabled. Please contact administration.");
+            }
+            
             // Verify password hash
             var isPasswordValid = passwordHasher.Verify(user.PasswordHash, request.Password);
 

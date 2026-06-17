@@ -1,6 +1,7 @@
 ﻿import { useAuth } from "@/context/AuthContext"
 import MemberDashboard from "./MemberDashboard"
 import TrainerDashboard from "./TrainerDashboard"
+import AdminDashboard from "./AdminDashboard"
 
 export default function Dashboard() {
     const { user } = useAuth()
@@ -11,7 +12,7 @@ export default function Dashboard() {
     }
 
     if (user?.role === "Admin") {
-        return <div className="p-12 text-center text-2xl font-bold">Admin Portal (Coming Soon)</div>
+        return <AdminDashboard />
     }
 
     // Default fallback for regular members

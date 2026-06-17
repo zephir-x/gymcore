@@ -74,7 +74,7 @@ export default function TrainerDashboard() {
             await queryClient.invalidateQueries({ queryKey: ['coach-agenda'] })
         },
         onError: (error: any) => {
-            console.error("Detailed add slot error:", error.response?.data || error.message)
+            console.error(error)
             toast.error("Failed to add slot", {
                 description: "This time slot is already taken or invalid. Please check your agenda."
             })
@@ -111,9 +111,8 @@ export default function TrainerDashboard() {
             await queryClient.invalidateQueries({ queryKey: ['coach-agenda'] })
         },
         onError: (error: any) => {
-            toast.error("Failed to cancel slot", {
-                description: error.response?.data?.Message || "Could not cancel this slot."
-            })
+            console.error(error)
+            toast.error("Failed to cancel slot", { description: "Could not cancel this slot." })
         }
     })
 

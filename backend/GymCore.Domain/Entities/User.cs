@@ -9,6 +9,8 @@ namespace GymCore.Domain.Entities
         public string PasswordHash { get; private set; }
         public UserRole Role { get; private set; }
         
+        public bool IsActive { get; private set; } = true;
+        
         public UserDetails Details { get; private set; }
         
         // EF Core needs a parameterless constructor to do its reflection magic when fetching from DB
@@ -36,6 +38,12 @@ namespace GymCore.Domain.Entities
         public void ChangeRole(UserRole newRole)
         {
             Role = newRole;
+            Update();
+        }
+        
+        public void ToggleActiveStatus()
+        {
+            IsActive = !IsActive;
             Update();
         }
     }
