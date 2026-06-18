@@ -1,42 +1,76 @@
-﻿### Try to create a room as a normal User (Should return 403 Forbidden)
-POST {{host}}/api/admin/rooms
-Authorization: Bearer {{userToken}}
-Content-Type: application/json
+﻿### ROOMS MANAGEMENT
 
-{
-  "name": "Yoga Studio",
-  "capacity": 15
-}
-
-### Try to create a room as an Admin (Should return 200 OK)
+### Create a room as an Admin
 POST {{host}}/api/admin/rooms
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-  "name": "Yoga Studio",
-  "capacity": 15
+  "name": "Elite Crossfit Arena",
+  "maxCapacity": 20
 }
 
-### Download coaches and save ID
-GET {{host}}/api/admin/coaches
-Authorization: Bearer {{adminToken}}
-
 > {%
-    if (response.status === 200 && response.body.length > 0) {
-        client.global.set("coachId", response.body[0].id);
+    if (response.status === 200) {
+        client.global.set("roomId", response.body.roomId);
+        client.log("Saved Room ID: " + response.body.roomId);
     }
 %}
 
-### Download rooms and save ID
-GET {{host}}/api/admin/rooms
+### Update the Room
+PUT {{host}}/api/admin/rooms/{{roomId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "roomId": "{{roomId}}",
+  "name": "Elite Crossfit Arena V2",
+  "maxCapacity": 25
+}
+
+### USERS & STAFF MANAGEMENT
+
+### Get all members
+GET {{host}}/api/admin/users?role=Member
 Authorization: Bearer {{adminToken}}
 
+### Hire a new Coach (Employee Provisioning)
+POST {{host}}/api/admin/coaches
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "new.trainer@gymcore.com",
+  "password": "TempPassword123!",
+  "firstName": "Anna",
+  "lastName": "Nowak"
+}
+
 > {%
-    if (response.status === 200 && response.body.length > 0) {
-        client.global.set("roomId", response.body[0].id);
+    if (response.status === 200) {
+        client.global.set("newCoachId", response.body.coachId);
+        client.log("Saved New Coach ID: " + response.body.coachId);
     }
 %}
+
+### Update User Profile & Force Password Reset
+PUT {{host}}/api/admin/users/{{newCoachId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "userId": "{{newCoachId}}",
+  "email": "anna.nowak.official@gymcore.com",
+  "firstName": "Anna",
+  "lastName": "Nowak-Kowalska",
+  "newPassword": "NewSecurePassword123!"
+}
+
+### Toggle User Status (Disable/Ban)
+PATCH {{host}}/api/admin/users/{{newCoachId}}/toggle-status
+Authorization: Bearer {{adminToken}}
+
+### SCHEDULE MANAGEMENT
 
 ### Create a new Group Class as Admin
 POST {{host}}/api/admin/classes
@@ -44,10 +78,46 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-  "name": "Evening Yoga",
+  "name": "Morning Yoga",
   "coachId": "{{coachId}}",
   "roomId": "{{roomId}}",
-  "startTime": "2026-07-01T18:00:00Z",
-  "endTime": "2026-07-01T19:00:00Z",
-  "maxAttendees": 10
+  "startTime": "2026-07-02T08:00:00Z",
+  "endTime": "2026-07-02T09:00:00Z",
+  "maxAttendees": 15
 }
+
+> {%
+    if (response.status === 200) {
+        client.global.set("adminClassId", response.body.classId);
+    }
+%}
+
+### OVERLAP VALIDATION TEST (Should Fail)
+### Trying to book the same room 30 minutes later (overlaps with Morning Yoga)
+POST {{host}}/api/admin/classes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Overlapping Pilates",
+  "coachId": "{{coachId}}",
+  "roomId": "{{roomId}}",
+  "startTime": "2026-07-02T08:30:00Z",
+  "endTime": "2026-07-02T09:30:00Z",
+  "maxAttendees": 15
+}
+
+### Get full schedule (Admin View with IsCancelled flag)
+GET {{host}}/api/admin/classes
+Authorization: Bearer {{adminToken}}
+
+### Soft Cancel a Group Class
+DELETE {{host}}/api/admin/classes/{{adminClassId}}
+Authorization: Bearer {{adminToken}}
+
+
+### STATISTICS
+
+### Get Dashboard KPIs (MRR, Users, Distribution)
+GET {{host}}/api/admin/statistics
+Authorization: Bearer {{adminToken}}

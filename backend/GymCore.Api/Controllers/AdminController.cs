@@ -99,5 +99,12 @@ namespace GymCore.Api.Controllers
             await sender.Send(new GymCore.Application.Features.Admin.Commands.DeleteGroupClass.DeleteGroupClassCommand(classId));
             return Ok(new { Message = "Class deleted successfully." });
         }
+        
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetStatistics()
+        {
+            var stats = await sender.Send(new Application.Features.Admin.Queries.GetDashboardStats.GetDashboardStatsQuery());
+            return Ok(stats);
+        }
     }
 }

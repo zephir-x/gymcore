@@ -5,12 +5,14 @@ import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Users, DollarSign, Dumbbell } from 'lucide-react'
 
 import {
     Dialog,
@@ -64,6 +66,18 @@ interface AdminClass {
     maxAttendees: number
     currentBookings: number
     isCancelled: boolean
+}
+
+interface SubscriptionDistribution {
+    tierName: string;
+    count: number;
+}
+
+interface DashboardStats {
+    totalMembers: number;
+    totalStaff: number;
+    monthlyRevenue: number;
+    distribution: SubscriptionDistribution[];
 }
 
 export default function AdminDashboard() {
@@ -127,6 +141,14 @@ export default function AdminDashboard() {
         queryFn: async () => (await api.get('/api/admin/classes')).data
     })
 
+    const { data: stats, isLoading: isStatsLoading } = useQuery<DashboardStats>({
+        queryKey: ['admin-stats'],
+        queryFn: async () => (await api.get('/api/admin/statistics')).data
+    })
+
+    // Colors for the chart (Blue, Purple, Gold and Gray for "Without Sub")
+    const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#94a3b8', '#10b981', '#ef4444'];
+    
     // Room mutations
     const saveRoomMutation = useMutation({
         mutationFn: async () => {
@@ -324,8 +346,91 @@ export default function AdminDashboard() {
                     </TabsList>
 
                     {/* Statistics */}
-                    <TabsContent value="statistics" className="w-full focus:outline-none">
-                        <Card className="w-full"><CardHeader><CardTitle>Statistics</CardTitle></CardHeader><CardContent>Coming soon...</CardContent></Card>
+                    <TabsContent value="statistics" className="w-full focus:outline-none space-y-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-800">Business Overview</h2>
+                            <p className="text-sm text-slate-500">Key Performance Indicators and revenue metrics.</p>
+                        </div>
+
+                        {isStatsLoading || !stats ? (
+                            <div className="p-12 text-center text-slate-500 animate-pulse">Calculating complex metrics...</div>
+                        ) : (
+                            /* Main mesh container */
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
+                                {/* Pie chart */}
+                                <Card className="shadow-sm border-slate-200 lg:col-span-2 h-full flex flex-col justify-between">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle>Subscription Distribution</CardTitle>
+                                        <CardDescription>Visual breakdown of active member plans and churn.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="h-80 pt-0">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={stats.distribution.map((entry, index) => ({
+                                                        ...entry,
+                                                        fill: entry.tierName === "Without Sub"
+                                                            ? "#94a3b8"
+                                                            : PIE_COLORS[index % PIE_COLORS.length]
+                                                    }))}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={80}
+                                                    outerRadius={110}
+                                                    paddingAngle={5}
+                                                    dataKey="count"
+                                                    nameKey="tierName"
+                                                />
+                                                <Tooltip formatter={(value: any, name: any) => [value, name]} />
+                                                <Legend verticalAlign="bottom" height={36} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </CardContent>
+                                </Card>
+
+                                {/* KPI tiles arranged vertically */}
+                                <div className="lg:col-span-1 flex flex-col gap-4 h-full justify-between">
+                                    {/* Active members */}
+                                    <Card className="shadow-sm border-slate-200 flex-1 flex items-center">
+                                        <CardContent className="p-5 flex items-center space-x-4 w-full">
+                                            <div className="p-3 bg-blue-50 rounded-xl text-blue-600 flex-shrink-0">
+                                                <Users size={24} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Active Members</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{stats.totalMembers}</h3>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Monthly income */}
+                                    <Card className="shadow-sm border-slate-200 flex-1 flex items-center">
+                                        <CardContent className="p-5 flex items-center space-x-4 w-full">
+                                            <div className="p-3 bg-green-50 rounded-xl text-green-600 flex-shrink-0">
+                                                <DollarSign size={24} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Monthly Revenue (MRR)</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{stats.monthlyRevenue.toFixed(2)} PLN</h3>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Staff (Coaches) */}
+                                    <Card className="shadow-sm border-slate-200 flex-1 flex items-center">
+                                        <CardContent className="p-5 flex items-center space-x-4 w-full">
+                                            <div className="p-3 bg-purple-50 rounded-xl text-purple-600 flex-shrink-0">
+                                                <Dumbbell size={24} />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Staff (Coaches)</p>
+                                                <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{stats.totalStaff}</h3>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        )}
                     </TabsContent>
 
                     {/* Users */}

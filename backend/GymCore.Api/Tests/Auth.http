@@ -21,7 +21,7 @@ Content-Type: application/json
 > {%
     if (response.status === 200) {
         client.global.set("userToken", response.body.token);
-        client.log("Jan's token saved to the userToken variable.");
+        client.log("Jan's token saved.");
     }
 %}
 
@@ -37,7 +37,7 @@ Content-Type: application/json
 > {%
     if (response.status === 200) {
         client.global.set("coachToken", response.body.token);
-        client.log("Coach token saved to the coachToken variable.");
+        client.log("Coach token saved.");
     }
 %}
 
@@ -53,6 +53,6 @@ Content-Type: application/json
 > {%
     if (response.status === 200) {
         client.global.set("adminToken", response.body.token);
-        client.log("Admin's token saved to the adminToken variable.");
+        client.log("Admin's token saved.");
     }
 %}

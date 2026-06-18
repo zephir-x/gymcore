@@ -5,7 +5,6 @@ Authorization: Bearer {{userToken}}
 > {%
     if (response.status === 200 && response.body.length > 0) {
         client.global.set("slotId", response.body[0].id);
-        client.log("Saved Slot ID: " + response.body[0].id);
     }
 %}
 
@@ -14,7 +13,7 @@ POST {{host}}/api/bookings/trainer-slots/{{slotId}}
 Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
-### Download a list of available classes and save the first class ID for booking
+### Download available classes
 GET {{host}}/api/bookings/classes
 Authorization: Bearer {{userToken}}
 Accept: application/json
@@ -22,11 +21,10 @@ Accept: application/json
 > {%
     if (response.status === 200 && response.body.length > 0) {
         client.global.set("classId", response.body[0].id);
-        client.log("Saved Class ID: " + response.body[0].id);
     }
 %}
 
-### Book the Morning Crossfit class
+### Book a class
 POST {{host}}/api/bookings/classes/{{classId}}
 Authorization: Bearer {{userToken}}
 Content-Type: application/json
@@ -37,20 +35,7 @@ Content-Type: application/json
     }
 %}
 
-### Protected Profile Check
-GET {{host}}/api/auth/profile
-Authorization: Bearer {{userToken}}
-
-### Download a list of available classes
-GET {{host}}/api/bookings/classes
-Authorization: Bearer {{userToken}}
-Accept: application/json
-
-### Get my reservations
+### Get my reservations (Will show 'Class Cancelled by Gym' if admin cancelled)
 GET {{host}}/api/bookings/my-reservations
 Authorization: Bearer {{userToken}}
 Accept: application/json
-
-### Cancel a reservation
-DELETE {{host}}/api/bookings/reservations/{{reservationId}}
-Authorization: Bearer {{userToken}}

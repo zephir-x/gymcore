@@ -6,7 +6,6 @@ Accept: application/json
 > {%
     if (response.status === 200 && response.body.length > 0) {
         client.global.set("tierId", response.body[0].id);
-        client.log("Saved Tier ID: " + response.body[0].id);
     }
 %}
 
