@@ -54,6 +54,18 @@ interface SystemUser {
     createdAt: string
 }
 
+interface AdminClass {
+    id: string
+    name: string
+    coachName: string
+    roomName: string
+    startTime: string
+    endTime: string
+    maxAttendees: number
+    currentBookings: number
+    isCancelled: boolean
+}
+
 export default function AdminDashboard() {
     const { logout } = useAuth()
     const queryClient = useQueryClient()
@@ -80,6 +92,15 @@ export default function AdminDashboard() {
     const [editEmail, setEditEmail] = React.useState("")
     const [editPassword, setEditPassword] = React.useState("")
 
+    // Schedule states
+    const [isClassModalOpen, setIsClassModalOpen] = React.useState(false)
+    const [className, setClassName] = React.useState("")
+    const [classCoachId, setClassCoachId] = React.useState("")
+    const [classRoomId, setClassRoomId] = React.useState("")
+    const [classStartTime, setClassStartTime] = React.useState("")
+    const [classEndTime, setClassEndTime] = React.useState("")
+    const [classMaxAttendees, setClassMaxAttendees] = React.useState("")
+    
     // Queries
     const { data: rooms, isLoading: isRoomsLoading } = useQuery<Room[]>({
         queryKey: ['admin-rooms'],
@@ -99,6 +120,11 @@ export default function AdminDashboard() {
     const { data: systemCoaches, isLoading: isCoachesLoading } = useQuery<SystemUser[]>({
         queryKey: ['admin-users', 'Coach'],
         queryFn: async () => (await api.get('/api/admin/users?role=Coach')).data
+    })
+
+    const { data: adminClasses, isLoading: isClassesLoading } = useQuery<AdminClass[]>({
+        queryKey: ['admin-classes'],
+        queryFn: async () => (await api.get('/api/admin/classes')).data
     })
 
     // Room mutations
@@ -198,6 +224,44 @@ export default function AdminDashboard() {
         }
     })
 
+    // Schedule mutations
+    const createClassMutation = useMutation({
+        mutationFn: async () => {
+            return await api.post('/api/admin/classes', {
+                name: className,
+                coachId: classCoachId,
+                roomId: classRoomId,
+                // We convert strings from DateTime-Local input to ISO format accepted by C#
+                startTime: new Date(classStartTime).toISOString(),
+                endTime: new Date(classEndTime).toISOString(),
+                maxAttendees: parseInt(classMaxAttendees)
+            })
+        },
+        onSuccess: async () => {
+            toast.success("Class Scheduled", { description: "The group class has been added to the calendar." })
+            setIsClassModalOpen(false)
+            setClassName(""); setClassCoachId(""); setClassRoomId(""); setClassStartTime(""); setClassEndTime(""); setClassMaxAttendees("");
+            await queryClient.invalidateQueries({ queryKey: ['admin-classes'] })
+        },
+        onError: (error: any) => {
+            console.error(error)
+            toast.error("Error", { description: "Scheduling failed." })
+        }
+        
+    })
+
+    const deleteClassMutation = useMutation({
+        mutationFn: async (classId: string) => await api.delete(`/api/admin/classes/${classId}`),
+        onSuccess: async () => {
+            toast.success("Class Removed")
+            await queryClient.invalidateQueries({ queryKey: ['admin-classes'] })
+        },
+        onError: (error: any) => {
+            console.error(error)
+            toast.error("Action Blocked", { description: "Failed to delete class." })
+        }
+    })
+    
     // Handlers
     const handleOpenCreateModal = () => {
         resetRoomForm()
@@ -443,8 +507,81 @@ export default function AdminDashboard() {
                     </TabsContent>
 
                     {/* Schedule */}
-                    <TabsContent value="schedule" className="w-full focus:outline-none">
-                        <Card className="w-full"><CardHeader><CardTitle>Schedule</CardTitle></CardHeader><CardContent>Coming soon...</CardContent></Card>
+                    <TabsContent value="schedule" className="w-full focus:outline-none space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-800">Group Classes Schedule</h2>
+                                <p className="text-sm text-slate-500">Organize sessions, assign coaches and manage capacity.</p>
+                            </div>
+                            <Button onClick={() => setIsClassModalOpen(true)} className="bg-slate-900 hover:bg-slate-800 text-white w-full sm:w-auto">
+                                + Schedule Class
+                            </Button>
+                        </div>
+
+                        <Card className="shadow-sm border-slate-200 w-full overflow-hidden">
+                            <CardContent className="p-0 w-full overflow-x-auto">
+                                {isClassesLoading ? (
+                                    <div className="p-8 text-center text-slate-500 animate-pulse">Loading schedule...</div>
+                                ) : adminClasses && adminClasses.length > 0 ? (
+                                    <Table className="w-full">
+                                        <TableHeader className="bg-slate-100">
+                                            <TableRow>
+                                                <TableHead className="font-semibold text-slate-700">Class Name</TableHead>
+                                                <TableHead className="font-semibold text-slate-700">Time</TableHead>
+                                                <TableHead className="font-semibold text-slate-700">Coach</TableHead>
+                                                <TableHead className="font-semibold text-slate-700">Room</TableHead>
+                                                <TableHead className="font-semibold text-slate-700">Attendees</TableHead>
+                                                <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {adminClasses.map((cls) => (
+                                                <TableRow key={cls.id} className={cls.isCancelled ? "bg-slate-50 opacity-50" : ""}>
+                                                    <TableCell className="font-medium text-slate-900">
+                                                        {cls.name} {cls.isCancelled && <span className="text-red-500 text-xs ml-2 font-bold">(CANCELLED)</span>}
+                                                    </TableCell>
+                                                    <TableCell className="text-slate-500">
+                                                        {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
+                                                        {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </TableCell>
+                                                    <TableCell>{cls.coachName}</TableCell>
+                                                    <TableCell><Badge variant="outline">{cls.roomName}</Badge></TableCell>
+                                                    <TableCell>
+                                                        <span className={cls.currentBookings >= cls.maxAttendees ? "text-red-500 font-bold" : ""}>
+                                                            {cls.currentBookings} / {cls.maxAttendees}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {/* Ukrywamy przycisk, jeśli klasa jest już anulowana */}
+                                                        {!cls.isCancelled && (
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">Cancel</Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Cancel Class</AlertDialogTitle>
+                                                                        <AlertDialogDescription>Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.</AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Keep it</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-destructive">
+                                                                            Yes, cancel class
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <div className="p-8 text-center text-slate-500">No classes scheduled yet. Create your first session!</div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>
@@ -562,6 +699,63 @@ export default function AdminDashboard() {
 
                         <Button type="submit" className="w-full mt-2" disabled={updateUserMutation.isPending}>
                             {updateUserMutation.isPending ? "Saving..." : "Save Profile Changes"}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Class Creator Modal */}
+            <Dialog open={isClassModalOpen} onOpenChange={setIsClassModalOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Schedule Group Class</DialogTitle>
+                        <DialogDescription>Assign a coach, pick a room, and set capacity limits.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={(e) => { e.preventDefault(); createClassMutation.mutate(); }} className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                            <Label>Class Title</Label>
+                            <Input value={className} onChange={e => setClassName(e.target.value)} required placeholder="e.g. HIIT Extreme" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2 flex flex-col">
+                                <Label>Assign Coach</Label>
+                                <select required value={classCoachId} onChange={e => setClassCoachId(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                                    <option value="" disabled>Select Coach</option>
+                                    {systemCoaches?.filter(c => c.isActive).map(c => (
+                                        <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2 flex flex-col">
+                                <Label>Facility Room</Label>
+                                <select required value={classRoomId} onChange={e => setClassRoomId(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                                    <option value="" disabled>Select Room</option>
+                                    {rooms?.map(r => (
+                                        <option key={r.id} value={r.id}>{r.name} (Max: {r.maxCapacity})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Start Time</Label>
+                                <Input type="datetime-local" value={classStartTime} onChange={e => setClassStartTime(e.target.value)} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>End Time</Label>
+                                <Input type="datetime-local" value={classEndTime} onChange={e => setClassEndTime(e.target.value)} required />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Max Attendees Limit</Label>
+                            <Input type="number" min="1" value={classMaxAttendees} onChange={e => setClassMaxAttendees(e.target.value)} required placeholder="e.g. 15" />
+                        </div>
+
+                        <Button type="submit" className="w-full mt-2" disabled={createClassMutation.isPending}>
+                            {createClassMutation.isPending ? "Scheduling..." : "Add to Calendar"}
                         </Button>
                     </form>
                 </DialogContent>

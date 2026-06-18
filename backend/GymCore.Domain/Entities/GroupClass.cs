@@ -17,6 +17,9 @@ namespace GymCore.Domain.Entities
         // Important: Business logic must ensure this doesn't exceed the Room's MaxCapacity
         public int MaxAttendees { get; private set; }
         
+        // Flag that tells if the classes are cancelled by admin or not
+        public bool IsCancelled { get; private set; } = false;
+        
         // Navigation properties for EF Core relationship mapping
         public User Coach { get; private set; }
         public Room Room { get; private set; }
@@ -51,6 +54,12 @@ namespace GymCore.Domain.Entities
             Name = name;
             RoomId = roomId;
             MaxAttendees = maxAttendees;
+            Update();
+        }
+
+        public void CancelClass()
+        {
+            IsCancelled = true;
             Update();
         }
     }

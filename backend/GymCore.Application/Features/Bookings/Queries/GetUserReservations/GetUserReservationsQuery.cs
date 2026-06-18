@@ -23,15 +23,18 @@ namespace GymCore.Application.Features.Bookings.Queries.GetUserReservations
     {
         public async Task<List<UserReservationDto>> Handle(GetUserReservationsQuery request, CancellationToken cancellationToken)
         {
-			// We are finding entities from the database
+            // We take group reservations
             var groupReservations = await context.ClassReservations
                 .AsNoTracking()
-                .Where(r => r.UserId == request.UserId && r.Status != ReservationStatus.Cancelled)
+                .Where(r => r.UserId == request.UserId 
+                            && r.Status != ReservationStatus.Cancelled 
+                            && !r.GroupClass.IsCancelled)
                 .Include(r => r.GroupClass)
                 .ThenInclude(c => c.Coach)
                 .ThenInclude(u => u.Details)
                 .ToListAsync(cancellationToken);
 
+            // We take reservations 1:1
             var personalReservations = await context.TrainerSlots
                 .AsNoTracking()
                 .Where(s => s.ClientId == request.UserId && s.Status == SlotStatus.Booked) 
@@ -39,7 +42,7 @@ namespace GymCore.Application.Features.Bookings.Queries.GetUserReservations
                 .ThenInclude(u => u.Details)
                 .ToListAsync(cancellationToken);
 
-            // We map and connect safely in C# memory
+            // We map and connect data
             var allReservations = groupReservations.Select(r => new UserReservationDto(
                     r.Id,
                     r.GroupClass.Id,
@@ -47,7 +50,10 @@ namespace GymCore.Application.Features.Bookings.Queries.GetUserReservations
                     $"{r.GroupClass.Coach.Details.FirstName} {r.GroupClass.Coach.Details.LastName}",
                     r.GroupClass.StartTime,
                     r.GroupClass.EndTime,
-                    r.Status.ToString(),
+                    
+                    // If the gym cancels classes, we overwrite the status so the customer can see it
+                    r.GroupClass.IsCancelled ? "Class Cancelled by Gym" : r.Status.ToString(),
+                    
                     "Group"
                 ))
                 .Concat(

@@ -18,15 +18,27 @@ namespace GymCore.Application.Features.Admin.Commands.CreateGroupClass
     {
         public async Task<Guid> Handle(CreateGroupClassCommand request, CancellationToken cancellationToken)
         {
-            // Verification whether the room exists
-            var roomExists = await context.Rooms.AnyAsync(r => r.Id == request.RoomId, cancellationToken);
-            if (!roomExists) throw new Exception("Room not found.");
+            // We check the room and its limits
+            var room = await context.Rooms.FirstOrDefaultAsync(r => r.Id == request.RoomId, cancellationToken);
+            if (room == null) throw new Exception("Room not found.");
 
-            // Verification whether the trainer exists (and whether he actually has a coaching role)
+            if (request.MaxAttendees > room.MaxCapacity)
+                throw new Exception($"Cannot set {request.MaxAttendees} attendees. Room '{room.Name}' has a maximum capacity of {room.MaxCapacity}.");
+
+            // We check if it's actually the coach
             var coachExists = await context.Users.AnyAsync(u => u.Id == request.CoachId && u.Role == Domain.Enums.UserRole.Coach, cancellationToken);
-            if (!coachExists) throw new Exception("Coach not found or invalid user role.");
+            if (!coachExists) throw new Exception("Coach not found or user is not a trainer.");
 
-            // Creating and saving an entity
+            // Overlap Validation
+            var roomIsOccupied = await context.GroupClasses
+                .AnyAsync(c => c.RoomId == request.RoomId && 
+                               request.StartTime < c.EndTime && 
+                               request.EndTime > c.StartTime, cancellationToken);
+
+            if (roomIsOccupied) 
+                throw new Exception("This room is already booked for another class during the selected time frame.");
+
+            // Registration
             var groupClass = new GroupClass(
                 request.Name,
                 request.CoachId,

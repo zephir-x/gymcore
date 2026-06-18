@@ -25,7 +25,7 @@ namespace GymCore.Application.Features.Bookings.Queries.GetAvailableClasses
         {
             return await context.GroupClasses
                 .AsNoTracking() // We don't track changes on read
-                .Where(c => c.StartTime >= DateTime.UtcNow) // We only draw future classes
+                .Where(c => c.StartTime >= DateTime.UtcNow && !c.IsCancelled) // We only draw future classes
                 .OrderBy(c => c.StartTime)
                 .Select(c => new GroupClassDto(
                     c.Id,

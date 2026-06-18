@@ -85,5 +85,19 @@ namespace GymCore.Api.Controllers
             var classId = await sender.Send(command);
             return Ok(new { Message = "Group class scheduled successfully.", ClassId = classId });
         }
+        
+        [HttpGet("classes")]
+        public async Task<IActionResult> GetClasses()
+        {
+            var classes = await sender.Send(new Application.Features.Admin.Queries.GetAdminClasses.GetAdminClassesQuery());
+            return Ok(classes);
+        }
+
+        [HttpDelete("classes/{classId}")]
+        public async Task<IActionResult> DeleteClass(Guid classId)
+        {
+            await sender.Send(new GymCore.Application.Features.Admin.Commands.DeleteGroupClass.DeleteGroupClassCommand(classId));
+            return Ok(new { Message = "Class deleted successfully." });
+        }
     }
 }
