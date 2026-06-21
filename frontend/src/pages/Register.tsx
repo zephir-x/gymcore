@@ -8,7 +8,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 const registerSchema = z.object({
@@ -53,13 +53,10 @@ export default function Register() {
             toast.success("Account created.", {
                 description: "You can now log in with your details."
             })
-            navigate('/login') // Smooth, automatic transfer
+            navigate('/login')
         },
         onError: (error: any) => {
-            // In the console we save the full error for devs to debug
             console.error("Server error details:", error.response?.data || error.message)
-
-            // We only display a short, elegant message to the user
             toast.error("Registration error", {
                 description: "Please verify your details. This email address may already be in use."
             })
@@ -71,59 +68,66 @@ export default function Register() {
     }
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-slate-50 p-4">
-            <div className="absolute top-4 right-4">
-                <Link to="/login">
-                    <Button variant="outline" className="font-semibold text-slate-600">
-                        Log in
-                    </Button>
-                </Link>
-            </div>
-
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="text-3xl font-bold text-primary">Join GymCore</CardTitle>
-                    <CardDescription>
-                        Please fill out the details below to create a new account.
+        <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 p-4 sm:p-8 font-sans overflow-hidden">
+            <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
+            
+            <Card className="relative z-10 w-full max-w-[420px] shadow-[0_0_50px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 bg-zinc-900/70 backdrop-blur-xl text-zinc-100 before:absolute before:inset-0 before:rounded-xl before:border before:border-white/10 before:pointer-events-none">
+                <CardHeader className="space-y-1 text-center pb-6 pt-10 px-8">
+                    <div className="flex justify-center mb-4">
+                        <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
+                            GYMCORE
+                        </h1>
+                    </div>
+                    <CardTitle className="text-xl font-bold tracking-tight text-white">
+                        Create an account
+                    </CardTitle>
+                    <CardDescription className="text-zinc-400">
+                        Enter your details below to join the club
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+
+                <CardContent className="pb-8 px-8">
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="firstName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-zinc-300 font-medium">First Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Jan" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                        </FormControl>
+                                        <FormMessage className="text-red-400" />
+                                    </FormItem>
+                                )}
+                            />
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="firstName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Name</FormLabel>
-                                            <FormControl><Input placeholder="Jan" {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="lastName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Last name</FormLabel>
-                                            <FormControl><Input placeholder="Kowalski" {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
+                            <FormField
+                                control={form.control}
+                                name="lastName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-zinc-300 font-medium">Last Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Kowalski" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                        </FormControl>
+                                        <FormMessage className="text-red-400" />
+                                    </FormItem>
+                                )}
+                            />
 
                             <FormField
                                 control={form.control}
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl><Input placeholder="jan.kowalski@gmail.com" {...field} /></FormControl>
-                                        <FormMessage />
+                                        <FormLabel className="text-zinc-300 font-medium">Email Address</FormLabel>
+                                        <FormControl>
+                                            <Input type="email" placeholder="jan.kowalski@gmail.com" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                        </FormControl>
+                                        <FormMessage className="text-red-400" />
                                     </FormItem>
                                 )}
                             />
@@ -133,9 +137,11 @@ export default function Register() {
                                 name="password"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Password</FormLabel>
-                                        <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
-                                        <FormMessage />
+                                        <FormLabel className="text-zinc-300 font-medium">Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="••••••••" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                        </FormControl>
+                                        <FormMessage className="text-red-400" />
                                     </FormItem>
                                 )}
                             />
@@ -145,19 +151,37 @@ export default function Register() {
                                 name="confirmPassword"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Confirm password</FormLabel>
-                                        <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
-                                        <FormMessage />
+                                        <FormLabel className="text-zinc-300 font-medium">Confirm Password</FormLabel>
+                                        <FormControl>
+                                            <Input type="password" placeholder="••••••••" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                        </FormControl>
+                                        <FormMessage className="text-red-400" />
                                     </FormItem>
                                 )}
                             />
 
-                            <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                                {registerMutation.isPending ? "Creating an account..." : "Register"}
+                            <Button
+                                type="submit"
+                                disabled={registerMutation.isPending}
+                                className="w-full h-11 text-md font-bold mt-4 border-none text-white shadow-[0_0_20px_rgba(249,115,22,0.25)] 
+                                bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 
+                                bg-[length:200%_auto] hover:bg-[position:right_center] 
+                                transition-all duration-500"
+                            >
+                                {registerMutation.isPending ? "Creating account..." : "Register"}
                             </Button>
                         </form>
                     </Form>
                 </CardContent>
+
+                <CardFooter className="flex justify-center border-t border-white/5 py-6 bg-zinc-950/30 rounded-b-xl">
+                    <p className="text-sm text-zinc-400">
+                        Already have an account?{" "}
+                        <Link to="/login" className="font-semibold text-orange-500 hover:text-orange-400 hover:underline underline-offset-4 transition-colors">
+                            Log in
+                        </Link>
+                    </p>
+                </CardFooter>
             </Card>
         </div>
     )

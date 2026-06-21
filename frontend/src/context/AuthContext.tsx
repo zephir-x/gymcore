@@ -7,6 +7,7 @@ export interface User {
     email: string;
     role: string;
     firstName?: string
+    lastName?: string
 }
 
 interface AuthContextType {
@@ -30,7 +31,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.sub || decoded.nameid || '',
             email: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email || '',
             role: decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role || decoded.Role || 'Member',
-            firstName: decoded.firstName
+            
+            firstName: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] || decoded.firstName || decoded.GivenName || 'Unknown',
+            lastName: decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] || decoded.lastName || decoded.Surname || ''
         };
     };
 
