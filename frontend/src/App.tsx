@@ -8,6 +8,7 @@ import Classes from "./pages/Classes"
 import PersonalTraining from "./pages/PersonalTraining"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { Toaster } from "@/components/ui/sonner"
+import Rooms from "@/pages/Rooms.tsx";
 
 // We define the path structure in the application
 const router = createBrowserRouter([
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
                 path: "/personal-training",
                 element: <PersonalTraining />,
             },
+            {
+                path: "/rooms",
+                element: <Rooms />
+            }
         ],
     },
     {

@@ -39,7 +39,6 @@ export default function Login() {
         },
         onSuccess: (data) => {
             login(data.token)
-            toast.success("Welcome back!", { description: "You have successfully logged in." })
             navigate('/')
         },
         onError: (error: any) => {
@@ -61,10 +60,15 @@ export default function Login() {
 
     return (
         <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 p-4 sm:p-8 font-sans overflow-hidden">
+            {/* AMBIENT GLOW EFFECTS */}
             <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-            <Card className="relative z-10 w-full max-w-[420px] shadow-[0_0_50px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 bg-zinc-900/70 backdrop-blur-xl text-zinc-100 before:absolute before:inset-0 before:rounded-xl before:border before:border-white/10 before:pointer-events-none">
+            {/* GLOSSY GLASS CARD */}
+            <Card className="relative z-10 w-full max-w-[420px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 
+            bg-zinc-900/30 backdrop-blur-2xl bg-gradient-to-br from-white/10 via-transparent to-black/40 text-zinc-100 before:absolute before:inset-0 before:rounded-xl 
+            before:border before:border-white/20 before:border-b-white/5 before:border-r-white/5 before:pointer-events-none">
+
                 <CardHeader className="space-y-1 text-center pb-6 pt-10 px-8">
                     <div className="flex justify-center mb-4">
                         <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
@@ -89,17 +93,12 @@ export default function Login() {
                                     <FormItem>
                                         <FormLabel className="text-zinc-300 font-medium">Email Address</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                placeholder="jan.kowalski@gmail.com"
-                                                {...field}
-                                                className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300"
-                                            />
+                                            <Input placeholder="jan.kowalski@gmail.com" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
                                         </FormControl>
                                         <FormMessage className="text-red-400" />
                                     </FormItem>
                                 )}
                             />
-
                             <FormField
                                 control={form.control}
                                 name="password"
@@ -107,18 +106,14 @@ export default function Login() {
                                     <FormItem>
                                         <FormLabel className="text-zinc-300 font-medium">Password</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="password"
-                                                placeholder="••••••••"
-                                                {...field}
-                                                className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300"
-                                            />
+                                            <Input type="password" placeholder="••••••••" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
                                         </FormControl>
                                         <FormMessage className="text-red-400" />
                                     </FormItem>
                                 )}
                             />
-                            
+
+                            {/* FIRE BUTTON */}
                             <Button
                                 type="submit"
                                 disabled={loginMutation.isPending}
@@ -127,17 +122,17 @@ export default function Login() {
                                 bg-[length:200%_auto] hover:bg-[position:right_center] 
                                 transition-all duration-500"
                             >
-                                {loginMutation.isPending ? "Authenticating..." : "Log In"}
+                                {loginMutation.isPending ? "Logging in..." : "Login"}
                             </Button>
                         </form>
                     </Form>
                 </CardContent>
 
-                <CardFooter className="flex justify-center border-t border-white/5 py-6 bg-zinc-950/30 rounded-b-xl">
+                <CardFooter className="flex justify-center border-t border-white/5 py-6 bg-transparent rounded-b-xl">
                     <p className="text-sm text-zinc-400">
                         Don't have an account?{" "}
                         <Link to="/register" className="font-semibold text-orange-500 hover:text-orange-400 hover:underline underline-offset-4 transition-colors">
-                            Create account
+                            Sign up
                         </Link>
                     </p>
                 </CardFooter>

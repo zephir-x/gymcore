@@ -2,6 +2,7 @@
 using GymCore.Application.Features.Bookings.Commands.BookClass;
 using GymCore.Application.Features.Bookings.Queries.GetAvailableClasses;
 using GymCore.Application.Features.Bookings.Queries.GetUserReservations;
+using GymCore.Application.Features.Admin.Queries.GetRooms;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -102,6 +103,13 @@ namespace GymCore.Api.Controllers
             await sender.Send(command);
 
             return Ok(new { Message = "Reservation cancelled successfully." });
+        }
+        
+        [HttpGet("rooms")]
+        public async Task<IActionResult> GetRooms()
+        {
+            var result = await sender.Send(new GetRoomsQuery());
+            return Ok(result);
         }
     }
 }

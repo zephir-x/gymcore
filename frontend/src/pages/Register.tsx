@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
+/* SCHEMA */
 const registerSchema = z.object({
     firstName: z.string().min(2, "Name must be at least 2 characters long."),
     lastName: z.string().min(2, "Last name must be at least 2 characters long."),
@@ -29,9 +30,11 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>
 
+/* COMPONENT */
 export default function Register() {
     const navigate = useNavigate()
 
+    /* FORM STATE */
     const form = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
         mode: "onChange",
@@ -44,6 +47,7 @@ export default function Register() {
         },
     })
 
+    /* MUTATIONS */
     const registerMutation = useMutation({
         mutationFn: async (values: RegisterFormValues) => {
             const response = await api.post('/api/auth/register', values)
@@ -68,11 +72,13 @@ export default function Register() {
     }
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 p-4 sm:p-8 font-sans overflow-hidden">
-            <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
-            
-            <Card className="relative z-10 w-full max-w-[420px] shadow-[0_0_50px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 bg-zinc-900/70 backdrop-blur-xl text-zinc-100 before:absolute before:inset-0 before:rounded-xl before:border before:border-white/10 before:pointer-events-none">
+        <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 p-4 sm:p-8 font-sans overflow-x-hidden overflow-y-auto">
+            {/* AMBIENT GLOW EFFECTS */}
+            <div className="fixed top-[-10%] left-[-5%] w-[500px] h-[500px] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="fixed bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+            {/* GLOSSY GLASS CARD */}
+            <Card className="relative z-10 w-full max-w-[420px] my-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 bg-zinc-900/30 backdrop-blur-2xl bg-gradient-to-br from-white/10 via-transparent to-black/40 text-zinc-100 before:absolute before:inset-0 before:rounded-xl before:border before:border-white/20 before:border-b-white/5 before:border-r-white/5 before:pointer-events-none">
                 <CardHeader className="space-y-1 text-center pb-6 pt-10 px-8">
                     <div className="flex justify-center mb-4">
                         <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
@@ -90,33 +96,37 @@ export default function Register() {
                 <CardContent className="pb-8 px-8">
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="firstName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-zinc-300 font-medium">First Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Jan" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
-                                        </FormControl>
-                                        <FormMessage className="text-red-400" />
-                                    </FormItem>
-                                )}
-                            />
 
-                            <FormField
-                                control={form.control}
-                                name="lastName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-zinc-300 font-medium">Last Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Kowalski" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
-                                        </FormControl>
-                                        <FormMessage className="text-red-400" />
-                                    </FormItem>
-                                )}
-                            />
+                            {/* COMPACT NAME ROW */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="firstName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-zinc-300 font-medium">First Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Jan" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                            </FormControl>
+                                            <FormMessage className="text-red-400 text-xs" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="lastName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-zinc-300 font-medium">Last Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Kowalski" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
+                                            </FormControl>
+                                            <FormMessage className="text-red-400 text-xs" />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
                             <FormField
                                 control={form.control}
@@ -127,7 +137,7 @@ export default function Register() {
                                         <FormControl>
                                             <Input type="email" placeholder="jan.kowalski@gmail.com" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
                                         </FormControl>
-                                        <FormMessage className="text-red-400" />
+                                        <FormMessage className="text-red-400 text-xs" />
                                     </FormItem>
                                 )}
                             />
@@ -141,7 +151,7 @@ export default function Register() {
                                         <FormControl>
                                             <Input type="password" placeholder="••••••••" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
                                         </FormControl>
-                                        <FormMessage className="text-red-400" />
+                                        <FormMessage className="text-red-400 text-xs" />
                                     </FormItem>
                                 )}
                             />
@@ -155,18 +165,16 @@ export default function Register() {
                                         <FormControl>
                                             <Input type="password" placeholder="••••••••" {...field} className="bg-zinc-950/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-0 focus-visible:border-orange-500 transition-all duration-300" />
                                         </FormControl>
-                                        <FormMessage className="text-red-400" />
+                                        <FormMessage className="text-red-400 text-xs" />
                                     </FormItem>
                                 )}
                             />
 
+                            {/* FIRE BUTTON */}
                             <Button
                                 type="submit"
                                 disabled={registerMutation.isPending}
-                                className="w-full h-11 text-md font-bold mt-4 border-none text-white shadow-[0_0_20px_rgba(249,115,22,0.25)] 
-                                bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 
-                                bg-[length:200%_auto] hover:bg-[position:right_center] 
-                                transition-all duration-500"
+                                className="w-full h-11 text-md font-bold mt-6 border-none text-white shadow-[0_0_20px_rgba(249,115,22,0.25)] bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] transition-all duration-500"
                             >
                                 {registerMutation.isPending ? "Creating account..." : "Register"}
                             </Button>
@@ -174,7 +182,7 @@ export default function Register() {
                     </Form>
                 </CardContent>
 
-                <CardFooter className="flex justify-center border-t border-white/5 py-6 bg-zinc-950/30 rounded-b-xl">
+                <CardFooter className="flex justify-center border-t border-white/5 py-6 bg-transparent rounded-b-xl">
                     <p className="text-sm text-zinc-400">
                         Already have an account?{" "}
                         <Link to="/login" className="font-semibold text-orange-500 hover:text-orange-400 hover:underline underline-offset-4 transition-colors">

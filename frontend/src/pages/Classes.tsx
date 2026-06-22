@@ -1,165 +1,171 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+﻿import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-
+import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 
-interface GroupClass {
-    id: string
-    name: string
-    startTime: string
-    endTime: string
-    maxAttendees: number
-    currentBookings: number
-}
+/* INTERFACES */
+interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number }
+interface Reservation { reservationId: string; targetId: string; type: string }
 
-interface Reservation {
-    reservationId: string
-    targetId: string 
-    type: string
-}
-
+/* COMPONENT */
 export default function Classes() {
     const queryClient = useQueryClient()
 
-    // Fetch available classes
+    /* STATE & HOOKS */
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+
+    /* QUERIES */
     const { data: classes, isLoading } = useQuery<GroupClass[]>({
         queryKey: ['classes'],
-        queryFn: async () => {
-            const response = await api.get('/api/bookings/classes')
-            return response.data
-        }
-    })
-    
-    // Fetch user reservations to check if already booked
-    const { data: reservations } = useQuery<Reservation[]>({
-        queryKey: ['my-reservations'],
-        queryFn: async () => {
-            const response = await api.get('/api/bookings/my-reservations')
-            return response.data
-        }
+        queryFn: async () => { const res = await api.get('/api/bookings/classes'); return res.data }
     })
 
-    // Book a class mutation
+    const { data: reservations } = useQuery<Reservation[]>({
+        queryKey: ['my-reservations'],
+        queryFn: async () => { const res = await api.get('/api/bookings/my-reservations'); return res.data }
+    })
+
+    /* MUTATIONS */
     const bookMutation = useMutation({
-        mutationFn: async (classId: string) => {
-            const response = await api.post(`/api/bookings/classes/${classId}`)
-            return response.data
-        },
+        mutationFn: async (classId: string) => { const res = await api.post(`/api/bookings/classes/${classId}`); return res.data },
         onSuccess: async (data) => {
-            toast.success("Success!", {
-                description: data.Message || "You have successfully booked the class."
-            })
-            // Update the classes list (to refresh seat count) and user reservations
+            toast.success("Spot Secured!", { description: data.Message || "You have successfully booked the class." })
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['classes'] }),
                 queryClient.invalidateQueries({ queryKey: ['my-reservations'] })
             ])
         },
         onError: (error: any) => {
-            // We dump the whole thing into the console for us
-            console.error("Booking error:", error.response?.data || error.message)
-
-            // Short information for the customer
-            toast.error("Booking Failed", {
-                description: "Could not book this class. Make sure you have an active subscription."
-            })
+            console.error("Booking Error:", error)
+            toast.error("Booking Failed", { description: "Could not book this class. An active subscription is required." })
         }
     })
 
-    // Helper functions for date formatting
-    const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
+    /* HELPERS */
+    const daysOfWeek = Array.from({ length: 14 }).map((_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d })
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
-    }
+    const filteredClasses = classes?.filter((cls) => {
+        return new Date(cls.startTime).toDateString() === selectedDate.toDateString()
+    }).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
 
+    const formatTime = (dateString: string) => new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const formatDayName = (date: Date) => date.toLocaleDateString([], { weekday: 'short' })
+    const formatDayNumber = (date: Date) => date.getDate()
+
+    /* RENDER */
     return (
-        <div className="min-h-screen bg-slate-50 p-6 md:p-12">
-            <div className="max-w-5xl mx-auto space-y-8">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900">Class Schedule</h1>
-                        <p className="text-slate-600 mt-1">Book your spot for upcoming group workouts.</p>
+        <div className="h-screen w-full bg-zinc-950 text-zinc-100 font-sans p-4 md:p-12 overflow-y-auto overflow-x-hidden select-none relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* AMBIENT GLOW EFFECTS */}
+            <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
+
+            <div className="max-w-4xl mx-auto relative z-10 space-y-8 animate-in fade-in duration-500 pb-12">
+                {/* HEADER */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0">
+                    <div className="flex items-center gap-4">
+                        <Link to="/">
+                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl border border-white/5 shrink-0">
+                                <ArrowLeft size={20} />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Class Schedule</h1>
+                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Plan your next 14 days</p>
+                        </div>
                     </div>
-                    <Link to="/">
-                        <Button variant="outline">Home</Button>
-                    </Link>
                 </div>
 
-                {/* Classes Grid */}
-                {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-[200px] bg-slate-200 rounded-xl"></div>
-                        ))}
-                    </div>
-                ) : classes && classes.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {classes.map((cls) => {
+                {/* HORIZONTAL WEEK CALENDAR STRIP */}
+                <div className="bg-zinc-900/30 border border-white/5 p-3 pb-4 rounded-2xl flex justify-start gap-2 overflow-x-auto shrink-0 snap-x snap-mandatory [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700">
+                    {daysOfWeek.map((day, idx) => {
+                        const isSelected = day.toDateString() === selectedDate.toDateString()
+                        return (
+                            <button
+                                key={idx}
+                                onClick={() => setSelectedDate(day)}
+                                className={`flex flex-col items-center justify-center w-16 h-20 rounded-xl transition-all duration-300 shrink-0 snap-start ${
+                                    isSelected
+                                        ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20 font-bold scale-105"
+                                        : "bg-zinc-950/40 border border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                }`}
+                            >
+                                <span className="text-[10px] md:text-xs uppercase tracking-wider font-semibold opacity-70 mb-1">{formatDayName(day)}</span>
+                                <span className="text-lg md:text-xl font-black">{formatDayNumber(day)}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+
+                {/* CLASSES TIMELINE */}
+                <div key={selectedDate.toISOString()} className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500 fill-mode-forwards">
+                    {isLoading ? (
+                        [1, 2, 3].map((i) => (
+                            <div key={i} className="flex gap-4 md:gap-6 items-center animate-pulse">
+                                <div className="w-12 md:w-16 h-6 bg-zinc-900 rounded-lg shrink-0" />
+                                <div className="flex-1 h-24 bg-zinc-900 rounded-2xl" />
+                            </div>
+                        ))
+                    ) : filteredClasses && filteredClasses.length > 0 ? (
+                        filteredClasses.map((cls) => {
                             const isFull = cls.currentBookings >= cls.maxAttendees
                             const spotsLeft = cls.maxAttendees - cls.currentBookings
-
-                            // We check the targetId and make sure it's a "Group" booking
                             const isBooked = reservations?.some(r => r.targetId === cls.id && r.type === "Group")
-                            
+
                             return (
-                                <Card key={cls.id} className={`flex flex-col shadow-sm border-slate-200 ${isFull ? 'opacity-75' : ''}`}>
-                                    <CardHeader className="pb-2">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <CardTitle className="text-xl font-bold text-slate-800">{cls.name}</CardTitle>
-                                                <CardDescription className="capitalize text-primary font-medium mt-1">
-                                                    {formatDate(cls.startTime)}
-                                                </CardDescription>
+                                <div key={cls.id} className="flex gap-4 md:gap-6 items-start md:items-center group">
+                                    {/* TIME INDICATOR */}
+                                    <div className="w-12 md:w-16 pt-3 md:pt-0 shrink-0 flex flex-col text-center md:text-left">
+                                        <span className="text-base md:text-lg font-black text-white group-hover:text-orange-500 transition-colors">{formatTime(cls.startTime)}</span>
+                                        <span className="text-[9px] md:text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Start</span>
+                                    </div>
+
+                                    {/* CLASS CARD */}
+                                    <div className={`flex-1 min-w-0 bg-zinc-900/40 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 rounded-2xl p-4 md:p-5 flex flex-col xl:flex-row justify-between xl:items-center gap-4 transition-all duration-300 relative overflow-hidden ${isFull && !isBooked ? "opacity-60" : ""}`}>
+                                        <div className="space-y-2 min-w-0">
+                                            <h3 className="text-lg md:text-xl font-bold text-white truncate">{cls.name}</h3>
+                                            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-[10px] md:text-xs font-semibold text-zinc-400">
+                                                <div className="flex items-center bg-zinc-950 px-2 py-1.5 rounded-lg border border-white/5 shrink-0">
+                                                    <Clock size={12} className="mr-1.5 text-orange-500" />
+                                                    <span>{formatTime(cls.startTime)} - {formatTime(cls.endTime)}</span>
+                                                </div>
+                                                <div className="flex items-center bg-zinc-950 px-2 py-1.5 rounded-lg border border-white/5 shrink-0">
+                                                    <Users size={12} className="mr-1.5 text-orange-500" />
+                                                    {isFull ? <span className="text-red-400 font-bold">Full ({cls.maxAttendees}/{cls.maxAttendees})</span> : <span>{spotsLeft} Spots Left</span>}
+                                                </div>
                                             </div>
-                                            {isFull ? (
-                                                <Badge variant="destructive">Fully Booked</Badge>
-                                            ) : (
-                                                <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
-                                                    {spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} left
-                                                </Badge>
-                                            )}
                                         </div>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow">
-                                        <div className="flex items-center text-slate-600 bg-slate-100 p-3 rounded-md w-fit">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                            <span className="font-semibold">{formatTime(cls.startTime)} - {formatTime(cls.endTime)}</span>
+
+                                        <div className="w-full xl:w-auto shrink-0 mt-2 xl:mt-0">
+                                            <Button
+                                                onClick={() => bookMutation.mutate(cls.id)}
+                                                disabled={isFull || isBooked || bookMutation.isPending}
+                                                className={`w-full xl:w-[140px] h-10 md:h-11 font-bold border-none transition-all duration-300 shadow-md ${
+                                                    isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                        isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                            "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                }`}
+                                            >
+                                                {bookMutation.isPending ? "Processing..." : isBooked ? <><CheckCircle2 size={16} /> Booked</> : isFull ? "Full" : "Book Class"}
+                                            </Button>
                                         </div>
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button
-                                            className="w-full"
-                                            onClick={() => bookMutation.mutate(cls.id)}
-                                            disabled={isFull || isBooked || bookMutation.isPending}
-                                            variant={isBooked ? "secondary" : (isFull ? "outline" : "default")}
-                                        >
-                                            {bookMutation.isPending
-                                                ? "Processing..."
-                                                : isBooked
-                                                    ? "Already Booked"
-                                                    : isFull
-                                                        ? "Waitlist (Coming Soon)"
-                                                        : "Book Class"}
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
+                                    </div>
+                                </div>
                             )
-                        })}
-                    </div>
-                ) : (
-                    <div className="text-center py-12 bg-white rounded-xl shadow-sm border">
-                        <h3 className="text-xl font-bold text-slate-700">No upcoming classes</h3>
-                        <p className="text-slate-500 mt-2">Our coaches are preparing the schedule. Check back later!</p>
-                    </div>
-                )}
+                        })
+                    ) : (
+                        /* EMPTY STATE */
+                        <div className="text-center py-12 md:py-16 bg-zinc-900/10 border border-dashed border-zinc-800 rounded-2xl p-6 max-w-md mx-auto">
+                            <div className="p-3 bg-zinc-900/50 rounded-full w-fit mx-auto mb-4 border border-white/5">
+                                <CalendarIcon size={24} className="text-zinc-600" />
+                            </div>
+                            <h3 className="text-base md:text-lg font-bold text-zinc-300">No classes today</h3>
+                            <p className="text-xs md:text-sm text-zinc-500 mt-1">There are no group sessions scheduled for this date. Try checking another day!</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )
