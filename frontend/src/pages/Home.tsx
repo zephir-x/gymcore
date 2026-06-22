@@ -4,13 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import {LogOut, Clock, ChevronRight, CheckCircle2, Users} from "lucide-react"
+import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number }
-interface Reservation { reservationId: string; targetId: string; type: string }
+interface Reservation { reservationId: string; targetId: string | null; title: string; trainerName: string; startTime: string; endTime: string; status: string; type: string; }
+interface Subscription { subscriptionId: string; tierName: string; startDate: string; endDate: string; status: string; }
 interface Coach { id: string; firstName: string; lastName: string }
 interface Room { id: string; name: string; maxCapacity: number; requiredTierId: string | null; requiredTierName: string | null; }
 
@@ -27,6 +28,11 @@ export default function Home() {
     const { data: reservations } = useQuery<Reservation[]>({
         queryKey: ['my-reservations'],
         queryFn: async () => { const res = await api.get('/api/bookings/my-reservations'); return res.data }
+    })
+
+    const { data: subscription, isLoading: isSubscriptionLoading } = useQuery<Subscription | null>({
+        queryKey: ['my-subscription'],
+        queryFn: async () => { const res = await api.get('/api/subscriptions/my'); return res.data }, retry: false
     })
 
     const { data: coaches, isLoading: isCoachesLoading } = useQuery<Coach[]>({
@@ -57,6 +63,24 @@ export default function Home() {
             toast.error("Booking Failed", { description: "Could not book this class. Make sure you have an active subscription." })
         }
     })
+    
+    const cancelReservationMutation = useMutation({
+        mutationFn: async (reservationId: string) => {
+            const res = await api.delete(`/api/bookings/reservations/${reservationId}`)
+            return res.data
+        },
+        onSuccess: async (data) => {
+            toast.success("Reservation Cancelled", { description: data.Message || "Your spot has been freed successfully." })
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['classes'] }),
+                queryClient.invalidateQueries({ queryKey: ['my-reservations'] })
+            ])
+        },
+        onError: (error: any) => {
+            console.error("Cancellation Error:", error)
+            toast.error("Action Failed", { description: "Could not cancel this reservation. Please try again later." })
+        }
+    })
 
     if (user?.role === "Coach" || user?.role === "Admin") return <Navigate to="/dashboard" replace />
 
@@ -67,7 +91,18 @@ export default function Home() {
 
     const formatTime = (dateString: string) => new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
-
+    const formatSubDate = (dateString: string) => new Date(dateString).toLocaleDateString([], { month: 'short', year: 'numeric' })
+    
+    const nowTime = new Date().getTime()
+    
+    const pastWorkoutsCount = reservations?.filter(r =>
+        new Date(r.endTime).getTime() < nowTime && r.status !== "Class Cancelled by Gym"
+    ).length || 0
+    
+    const upcomingBookings = reservations?.filter(r =>
+        new Date(r.endTime).getTime() >= nowTime
+    ) || []
+    
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
             {/* LEFT COLUMN: PROFILE & NAV */}
@@ -80,8 +115,8 @@ export default function Home() {
                 </div>
 
                 {/* PROFILE CARD */}
-                <Link to="/dashboard" className="flex flex-col items-center justify-center text-center mb-4 p-4 rounded-2xl border border-transparent hover:border-white/5 hover:bg-zinc-900/40 transition-all duration-300 group shrink-0 w-full">
-                    <Avatar className="h-16 w-16 border-2 border-orange-500 group-hover:scale-105 transition-transform duration-300">
+                <Link to="/dashboard" className="flex flex-col items-center justify-center text-center gap-2 mb-6 p-4 rounded-2xl border border-transparent hover:border-white/5 hover:bg-zinc-900/40 transition-all duration-300 group shrink-0 w-full">
+                    <Avatar className="h-16 w-16 border-2 border-orange-500 group-hover:scale-105 transition-transform duration-300 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
                         <AvatarImage src="" />
                         <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold text-2xl">
                             {displayName.charAt(0)}
@@ -95,22 +130,36 @@ export default function Home() {
                         </h2>
 
                         <p className="text-xs text-zinc-400 font-medium mt-1 mb-2">{user?.role}</p>
-
-                        <div className="px-3 py-1 bg-zinc-950 border border-dashed border-zinc-800 rounded-md text-[10px] text-zinc-500 whitespace-nowrap overflow-hidden text-ellipsis">
-                            PLACEHOLDER: Member for 5 months
+                        
+                        {/* DYNAMIC MEMBERSHIP BADGE */}
+                        <div className="px-3 py-1 bg-zinc-950 border border-dashed border-zinc-800 rounded-md text-[10px] text-zinc-500 whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-1.5">
+                            <Award size={12} className={subscription ? "text-orange-500" : "text-zinc-600"} />
+                            {subscription ? `Active since ${formatSubDate(subscription.startDate)}` : "No Active Membership"}
                         </div>
                     </div>
                 </Link>
 
-                {/* STATS */}
+                {/* DYNAMIC STATS (CURRENT PLAN & WORKOUTS) */}
                 <div className="grid grid-cols-2 gap-4 mb-4 shrink-0 w-full">
-                    <div className="bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-24">
-                        <span className="text-xs text-zinc-500 mb-1">Current Plan</span>
-                        <span className="text-sm font-bold text-zinc-400">PLACEHOLDER</span>
+                    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-24 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 z-10">Current Plan</span>
+                        {isSubscriptionLoading ? (
+                            <div className="h-5 w-16 bg-zinc-800 animate-pulse rounded z-10" />
+                        ) : (
+                            <span className={`text-sm font-black z-10 ${subscription ? 'text-orange-400' : 'text-zinc-500'}`}>
+                                {subscription ? subscription.tierName : "FREE"}
+                            </span>
+                        )}
                     </div>
-                    <div className="bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-24">
-                        <span className="text-xs text-zinc-500 mb-1">Workouts</span>
-                        <span className="text-sm font-bold text-zinc-400">PLACEHOLDER</span>
+
+                    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-24 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 z-10">Workouts</span>
+                        <div className="flex items-center justify-center gap-1.5 z-10">
+                            <Activity size={14} className="text-zinc-600" />
+                            <span className="text-xl font-black text-white">{pastWorkoutsCount}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -323,8 +372,80 @@ export default function Home() {
 
             {/* RIGHT COLUMN: WIDGETS */}
             <aside className="hidden xl:flex w-[350px] flex-col border-l border-white/10 bg-zinc-950 p-6 overflow-hidden h-full justify-between shrink-0">
-                <div className="flex-1 bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl flex items-center justify-center p-6 text-center mb-4 min-h-0 w-full">
-                    <p className="text-sm text-zinc-500 font-medium">PLACEHOLDER:<br/>My Upcoming Bookings List</p>
+                {/* MODULE: MY UPCOMING BOOKINGS */}
+                <div className="flex-1 flex flex-col min-h-0 w-full mb-6">
+                    <div className="flex items-center gap-2 mb-6 shrink-0">
+                        <Calendar size={18} className="text-orange-500" />
+                        <h3 className="text-lg font-bold text-white tracking-tight">Upcoming Schedule</h3>
+                        <span className="ml-auto px-2 py-0.5 bg-zinc-900 border border-white/10 rounded-full text-[10px] font-black text-orange-400">
+                            {upcomingBookings.length}
+                        </span>
+                    </div>
+                    
+                    <div className="relative flex-1 min-h-0">
+                        <div className="h-full overflow-y-auto pr-1 pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            {upcomingBookings.length > 0 ? (
+                                <div className="relative border-l-2 border-zinc-900 ml-3.5 pl-6 space-y-6">
+                                    {upcomingBookings.map((booking) => {
+                                        const isGroup = booking.type === "Group"
+                                        return (
+                                            <div key={booking.reservationId} className="relative group/item animate-in fade-in slide-in-from-right-4 duration-300">
+                                                {/* TIMELINE PIN POINT */}
+                                                <div className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full bg-zinc-950 border-2 border-orange-500 group-hover/item:scale-125 group-hover/item:bg-orange-500 transition-all duration-300 shadow-[0_0_8px_rgba(249,115,22,0.4)]" />
+
+                                                {/* GLOSSY TIMELINE CARD */}
+                                                <div className="bg-zinc-900/30 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 p-4 rounded-xl transition-all duration-300 relative overflow-hidden flex flex-col justify-between gap-3">
+                                                    <div>
+                                                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                                                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${isGroup ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                                                                {isGroup ? 'Group Class' : '1:1 Session'}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold text-zinc-500">
+                                                                {formatDate(booking.startTime)}
+                                                            </span>
+                                                        </div>
+
+                                                        <h4 className="text-white font-bold text-sm truncate leading-snug">
+                                                            {booking.title}
+                                                        </h4>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between border-t border-white/5 pt-2.5 mt-0.5">
+                                                        <div className="flex items-center text-zinc-400 text-xs font-semibold">
+                                                            <Clock size={13} className="mr-1.5 text-orange-500" />
+                                                            <span>{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</span>
+                                                        </div>
+
+                                                        {/* INTERACTIVE CANCEL BUTTON ON HOVER */}
+                                                        <button
+                                                            disabled={cancelReservationMutation.isPending}
+                                                            onClick={() => cancelReservationMutation.mutate(booking.reservationId)}
+                                                            className="text-zinc-500 hover:text-red-400 flex items-center gap-1 text-[11px] font-bold opacity-0 group-hover/item:opacity-100 transition-all duration-300"
+                                                        >
+                                                            <XCircle size={13} /> Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            ) : (
+                                /* EMPTY TIMELINE STATE */
+                                <div className="h-full border border-dashed border-zinc-900 rounded-2xl flex flex-col items-center justify-center p-6 text-center text-zinc-600 space-y-3">
+                                    <div className="p-3 bg-zinc-900/50 rounded-full border border-white/5">
+                                        <Dumbbell size={20} className="text-zinc-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-zinc-400">No upcoming workouts</p>
+                                        <p className="text-xs text-zinc-600 mt-1">Book a class or 1:1 session to fill your schedule.</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none" />
+                    </div>
                 </div>
 
                 <div className="h-[140px] bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl flex items-center justify-center p-6 text-center mb-4 shrink-0 w-full">

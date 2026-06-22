@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
+import { ArrowLeft, ShieldAlert, Sparkles, Zap, CheckCircle2, XCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-// Expected structure of subscription tier data from the API
+/* INTERFACES */
 interface SubscriptionTier {
     id: string
     name: string
@@ -15,27 +15,26 @@ interface SubscriptionTier {
     discountPercentage: number
 }
 
+/* COMPONENT */
 export default function Subscriptions() {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
 
-    // State to track the selected billing cycle (1, 6, or 12 months)
+    /* STATE */
     const [months, setMonths] = useState<number>(1)
 
-    // Fetch available subscription tiers
+    /* QUERIES */
     const { data: tiers, isLoading } = useQuery<SubscriptionTier[]>({
         queryKey: ['subscription-tiers'],
         queryFn: async () => (await api.get('/api/subscriptions/tiers')).data
     })
 
-    // Fetch the user's current subscription (if any)
     const { data: mySubscription } = useQuery<any>({
         queryKey: ['my-subscription'],
         queryFn: async () => {
             try {
-                return (await api.get('/api/subscriptions/my-subscription')).data
+                return (await api.get('/api/subscriptions/my')).data
             } catch (error: any) {
-                // Return null gracefully if the user has no active subscription (404 Not Found)
                 if (error.response?.status === 404) return null
                 throw error
             }
@@ -43,7 +42,7 @@ export default function Subscriptions() {
         retry: false
     })
 
-    // Handles the purchase or upgrade of a subscription
+    /* MUTATIONS */
     const purchaseMutation = useMutation({
         mutationFn: async (tierId: string) => {
             const response = await api.post(`/api/subscriptions/purchase/${tierId}`, { months })
@@ -51,9 +50,8 @@ export default function Subscriptions() {
         },
         onSuccess: async () => {
             toast.success("Success!", { description: "Your subscription has been upgraded successfully." })
-            // Invalidate the cache to ensure the dashboard reflects the new subscription status immediately
             await queryClient.invalidateQueries({ queryKey: ['my-subscription'] })
-            navigate('/dashboard')
+            navigate('/')
         },
         onError: (error: any) => {
             console.error("Purchase error:", error.response?.data || error.message)
@@ -61,97 +59,173 @@ export default function Subscriptions() {
         }
     })
 
-    // Calculates the total price based on the selected tier and billing cycle duration, applying appropriate discounts
+    /* HELPERS */
     const calculatePrice = (monthlyPrice: number): string => {
         if (months === 1) return monthlyPrice.toFixed(2)
-        if (months === 6) return (monthlyPrice * 6 * 0.90).toFixed(2) // 10% discount for 6 months
-        if (months === 12) return (monthlyPrice * 12 * 0.81).toFixed(2) // Compounded discount for 12 months
+        if (months === 6) return (monthlyPrice * 6 * 0.90).toFixed(2)
+        if (months === 12) return (monthlyPrice * 12 * 0.81).toFixed(2)
         return (monthlyPrice * months).toFixed(2)
     }
 
-    // Determine the base price of the user's current subscription to formulate upgrade logic
     const currentTier = tiers?.find(t => t.name === mySubscription?.tierName)
     const currentBasePrice = currentTier ? currentTier.monthlyPrice : 0
 
-    // Calculate the remaining duration of the current subscription in months
     let currentMonths = 0
     if (mySubscription) {
         const start = new Date(mySubscription.startDate)
         const end = new Date(mySubscription.endDate)
-        // Divide the difference in milliseconds by the approximate number of milliseconds in a month
         currentMonths = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
     }
 
+    /* RENDER */
     return (
-        <div className="min-h-screen bg-slate-50 p-6 md:p-12">
-            <div className="max-w-5xl mx-auto space-y-8">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900">Gym Plans</h1>
-                        <p className="text-slate-600 mt-1">Upgrade your plan to unlock premium features.</p>
+        <div className="h-screen w-full bg-zinc-950 text-zinc-100 font-sans p-4 md:p-12 overflow-y-auto overflow-x-hidden select-none relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* AMBIENT GLOW EFFECTS */}
+            <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
+                {/* HEADER */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0">
+                    <div className="flex items-center gap-4">
+                        <Link to="/">
+                            <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl border border-white/5 shrink-0">
+                                <ArrowLeft size={20} />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Gym Plans</h1>
+                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Upgrade your plan to unlock premium features and rooms</p>
+                        </div>
                     </div>
-                    <Link to="/dashboard">
-                        <Button variant="outline">Return</Button>
-                    </Link>
                 </div>
 
-                {/* Billing Cycle Toggle */}
-                <div className="flex justify-center my-8">
-                    <div className="bg-white p-1 rounded-xl shadow-sm border inline-flex">
-                        <Button variant={months === 1 ? "default" : "ghost"} onClick={() => setMonths(1)} className="rounded-lg px-6">1 Month</Button>
-                        <Button variant={months === 6 ? "default" : "ghost"} onClick={() => setMonths(6)} className="rounded-lg px-6">6 Months (-10%)</Button>
-                        <Button variant={months === 12 ? "default" : "ghost"} onClick={() => setMonths(12)} className="rounded-lg px-6">12 Months (-19%)</Button>
+                {/* PILL SWITCH (BILLING CYCLE TOGGLE) */}
+                <div className="flex justify-center mb-12">
+                    <div className="bg-zinc-900/50 p-1.5 rounded-2xl border border-white/5 inline-flex backdrop-blur-md relative z-20 shadow-lg">
+                        <button
+                            onClick={() => setMonths(1)}
+                            className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${months === 1 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            {months === 1 && <div className="absolute inset-0 bg-zinc-800 rounded-xl shadow-md border border-white/10 -z-10" />}
+                            1 Month
+                        </button>
+                        <button
+                            onClick={() => setMonths(6)}
+                            className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${months === 6 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            {months === 6 && <div className="absolute inset-0 bg-zinc-800 rounded-xl shadow-md border border-white/10 -z-10" />}
+                            6 Months <span className="text-orange-500 ml-1">-10%</span>
+                        </button>
+                        <button
+                            onClick={() => setMonths(12)}
+                            className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${months === 12 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            {months === 12 && <div className="absolute inset-0 bg-zinc-800 rounded-xl shadow-md border border-white/10 -z-10" />}
+                            12 Months <span className="text-orange-500 ml-1">-19%</span>
+                        </button>
                     </div>
                 </div>
 
-                {/* Subscription Tiers Grid */}
+                {/* SUBSCRIPTION TIERS GRID */}
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-                        {[1, 2, 3].map((i) => <div key={i} className="h-[300px] bg-slate-200 rounded-xl"></div>)}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 animate-pulse">
+                        {[1, 2, 3].map((i) => <div key={i} className="h-[450px] bg-zinc-900 rounded-3xl" />)}
                     </div>
                 ) : tiers && tiers.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
                         {tiers.map((tier) => {
-
-                            // We disable the purchase button if the user is attempting to downgrade
-                            // or trying to buy the exact same tier for a shorter or equal duration
                             const isDowngrade = tier.monthlyPrice < currentBasePrice
                             const isSameButShorter = tier.monthlyPrice === currentBasePrice && months <= currentMonths
                             const isDisabled = mySubscription && (isDowngrade || isSameButShorter)
+                            
+                            const isPremium = tier.monthlyPrice > 100
 
                             return (
-                                <Card key={tier.id} className={`flex flex-col shadow-md border-slate-200 transition-all ${isDisabled ? 'opacity-60 bg-slate-50' : 'hover:shadow-lg'}`}>
-                                    <CardHeader className="text-center pb-2">
-                                        <CardTitle className="text-2xl font-bold text-slate-800">{tier.name}</CardTitle>
-                                        <CardDescription>
-                                            {tier.discountPercentage > 0
-                                                ? `Includes a ${tier.discountPercentage * 100}% discount on premium services!`
-                                                : "Standard gym access"}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="text-center flex-grow py-6">
-                                        <span className="text-5xl font-extrabold text-primary">{calculatePrice(tier.monthlyPrice)} PLN</span>
-                                        <span className="text-slate-500 font-medium block mt-2">
-                                            {months === 1 ? "per month" : `for ${months} months`}
-                                        </span>
-                                    </CardContent>
-                                    <CardFooter>
+                                <div
+                                    key={tier.id}
+                                    className={`relative bg-zinc-900/40 border transition-all duration-500 rounded-3xl p-8 flex flex-col overflow-hidden group 
+                                        ${isDisabled ? 'opacity-50 border-white/5 grayscale' : isPremium ? 'border-orange-500/50 hover:border-orange-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(249,115,22,0.1)]' : 'border-white/5 hover:border-white/20 hover:-translate-y-2'}`}
+                                >
+                                    {isPremium && !isDisabled && (
+                                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-orange-500/20 blur-[50px] rounded-full group-hover:bg-orange-500/30 transition-all duration-500" />
+                                    )}
+
+                                    <div className="relative z-10 flex flex-col h-full">
+                                        {/* TIER HEADER */}
+                                        <div className="mb-8">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h3 className="text-2xl font-black text-white">{tier.name}</h3>
+                                                {!isDisabled && (
+                                                    <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full flex items-center gap-1 ${isPremium ? 'bg-orange-500/10 border border-orange-500/20 text-orange-500' : 'bg-zinc-800/50 border border-zinc-700 text-zinc-400'}`}>
+                                                        {isPremium && <Sparkles size={12} />} {tier.name}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-zinc-400 font-medium">
+                                                {tier.discountPercentage > 0
+                                                    ? `Includes a ${tier.discountPercentage * 100}% discount on premium services!`
+                                                    : "Standard gym access and basic amenities."}
+                                            </p>
+                                        </div>
+
+                                        {/* PRICING */}
+                                        <div className="mb-8 flex-grow">
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-5xl font-black text-white">{calculatePrice(tier.monthlyPrice)}</span>
+                                                <span className="text-xl font-bold text-zinc-500 mb-1">PLN</span>
+                                            </div>
+                                            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mt-2 block">
+                                                {months === 1 ? "Billed Monthly" : `Billed every ${months} months`}
+                                            </span>
+                                        </div>
+
+                                        {/* DYNAMIC FEATURES */}
+                                        <div className="space-y-3 mb-8">
+                                            <div className="flex items-center gap-3 text-sm text-zinc-300 font-medium">
+                                                <CheckCircle2 size={16} className={isPremium ? "text-orange-500" : "text-green-500"} /> Basic Rooms Access
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-3 text-sm font-medium">
+                                                {tier.name.toLowerCase() === "pro" || tier.name.toLowerCase() === "vip" ? (
+                                                    <><CheckCircle2 size={16} className={isPremium ? "text-orange-500" : "text-green-500"} /> <span className="text-zinc-300">Cardio Zone</span></>
+                                                ) : (
+                                                    <><XCircle size={16} className="text-zinc-700" /> <span className="text-zinc-600 line-through">Cardio Zone</span></>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-3 text-sm font-medium">
+                                                {tier.name.toLowerCase() === "vip" ? (
+                                                    <><CheckCircle2 size={16} className="text-orange-500" /> <span className="text-zinc-300">All Rooms + Sauna</span></>
+                                                ) : (
+                                                    <><XCircle size={16} className="text-zinc-700" /> <span className="text-zinc-600 line-through">All Rooms + Sauna</span></>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* ACTION BUTTON */}
                                         <Button
-                                            className="w-full text-lg h-12"
                                             onClick={() => purchaseMutation.mutate(tier.id)}
                                             disabled={isDisabled || purchaseMutation.isPending}
-                                            variant={isDisabled ? "secondary" : "default"}
+                                            className={`w-full h-12 font-bold text-base transition-all duration-500 ${
+                                                isDisabled ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                    isPremium ? "border-none text-white shadow-[0_0_20px_rgba(249,115,22,0.2)] bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center]" :
+                                                        "bg-zinc-100 text-zinc-900 hover:bg-white"
+                                            }`}
                                         >
-                                            {purchaseMutation.isPending ? "Processing..." : (isDisabled ? "Current or lower tier" : "Select Plan")}
+                                            {purchaseMutation.isPending ? "Processing..." :
+                                                (isDisabled ? <><ShieldAlert size={16} className="mr-2" /> Current Plan</> :
+                                                    isPremium ? <><Zap size={16} className="mr-2" /> Upgrade Now</> : "Select Plan")}
                                         </Button>
-                                    </CardFooter>
-                                </Card>
+                                    </div>
+                                </div>
                             )
                         })}
                     </div>
                 ) : (
-                    <div className="text-center py-12">No plans available.</div>
+                    <div className="text-center py-16 bg-zinc-900/10 border border-dashed border-zinc-800 rounded-3xl max-w-2xl mx-auto">
+                        <p className="text-zinc-500 font-medium">No subscription plans are currently available.</p>
+                    </div>
                 )}
             </div>
         </div>
