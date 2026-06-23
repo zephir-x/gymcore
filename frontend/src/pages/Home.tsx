@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell } from "lucide-react"
+import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -458,8 +458,42 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="h-[140px] bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl flex items-center justify-center p-6 text-center mb-4 shrink-0 w-full">
-                    <p className="text-sm text-zinc-500 font-medium">PLACEHOLDER:<br/>Google Maps Directions</p>
+                {/* MODULE: GYM LOCATION & DIRECTIONS */}
+                <div className="relative h-[160px] bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden mb-4 shrink-0 w-full group">
+                    <iframe
+                        title="GymCore Location"
+                        src="https://maps.google.com/maps?q=Z%C5%82ote%20Tarasy,%20Warsaw&t=&z=14&ie=UTF8&iwloc=&output=embed"
+                        className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity group-hover:opacity-100 group-hover:mix-blend-normal transition-all duration-700 pointer-events-none grayscale invert-[.9] contrast-[.8] group-hover:grayscale-0 group-hover:invert-0 group-hover:contrast-100"
+                        loading="lazy"
+                    />
+
+                    {/* GRADIENT OVERLAY */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent pointer-events-none transition-opacity duration-700 group-hover:opacity-80" />
+
+                    <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                        <div className="flex items-end justify-between gap-2">
+                            <div className="relative z-10">
+                                <h4 className="text-white font-bold text-xs flex items-center gap-1.5 drop-shadow-md whitespace-nowrap">
+                                    <MapPin size={14} className="text-orange-500" />
+                                    GymCore Fitness Club
+                                </h4>
+                                <p className="text-xs text-zinc-400 mt-0.5 ml-5 drop-shadow-md whitespace-nowrap">Złota 59, 00-120 Warsaw</p>
+                            </div>
+
+                            {/* DEEP LINKING DIRECTLY TO GOOGLE MAPS NAVIGATION ROUTING */}
+                            <a
+                                href="https://www.google.com/maps/dir/?api=1&destination=Złote+Tarasy,+Warsaw"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 relative z-10"
+                            >
+                                <Button size="sm" className="bg-white text-black hover:bg-gradient-to-r hover:from-orange-600 hover:via-amber-400 hover:to-orange-600 hover:bg-[length:200%_auto] hover:text-white font-bold h-8 text-xs rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.2)] hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all duration-500 border-none">
+                                    <Navigation size={12} className="mr-1.5" />
+                                    Directions
+                                </Button>
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="h-[120px] bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl flex items-center justify-center p-6 text-center shrink-0 w-full">

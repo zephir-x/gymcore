@@ -117,7 +117,7 @@ export default function TrainerDashboard() {
 
             <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
                 {/* HEADER */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0 gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-2 gap-4 px-2">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-zinc-900/80 rounded-xl border border-white/5">
                             <ShieldAlert className="text-orange-500" size={24} />
@@ -127,183 +127,177 @@ export default function TrainerDashboard() {
                             <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Welcome to your workspace, <span className="text-orange-400">{user?.firstName}</span>!</p>
                         </div>
                     </div>
-                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
+                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors mr-2">
                         <LogOut size={18} className="mr-2" /> Log out
                     </Button>
                 </div>
 
+                {/* 2-COLUMN LAYOUT WITH FLEX BOX */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* LEFT COLUMN: PROFILE */}
-                    <div className="lg:col-span-1 space-y-8 animate-in slide-in-from-left-4 duration-500">
-                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl overflow-hidden relative group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
-                            <CardContent className="p-6 flex flex-col items-center text-center">
-                                <div className="w-24 h-24 rounded-full bg-zinc-950 border-2 border-orange-500/50 mb-4 flex items-center justify-center relative shadow-[0_0_20px_rgba(249,115,22,0.1)] group-hover:border-orange-500 transition-colors">
-                                    <UserCircle size={48} className="text-zinc-600" />
-                                </div>
-                                <h3 className="text-xl font-bold text-white mb-1">{user?.firstName} {user?.lastName}</h3>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-orange-500 mb-4">Expert Trainer</p>
+                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl overflow-hidden relative group lg:col-span-1 animate-in slide-in-from-left-4 duration-500 h-full flex flex-col">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
+                        <CardContent className="p-6 flex flex-col items-center justify-center h-full text-center flex-1">
+                            <div className="w-24 h-24 rounded-full bg-zinc-950 border-2 border-orange-500/50 mb-4 flex items-center justify-center relative shadow-[0_0_20px_rgba(249,115,22,0.1)] group-hover:border-orange-500 transition-colors">
+                                <UserCircle size={48} className="text-zinc-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-1">{user?.firstName} {user?.lastName}</h3>
+                            <p className="text-xs font-semibold uppercase tracking-wider text-orange-500 mb-6">Expert Trainer</p>
 
-                                <div className="w-full h-10 bg-zinc-950/50 border border-white/5 rounded-lg flex items-center justify-center text-zinc-500 text-xs font-medium border-dashed cursor-not-allowed">
-                                    PLACEHOLDER: Profile Settings
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <div className="w-full mt-auto bg-zinc-950/50 border border-white/5 rounded-lg flex items-center justify-center text-zinc-500 text-xs font-medium border-dashed cursor-not-allowed py-3">
+                                PLACEHOLDER: Profile Settings
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* CREATE SLOT FORM */}
-                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl">
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <CalendarPlus size={18} className="text-orange-500" />
-                                    <CardTitle className="text-white text-lg">Add Availability</CardTitle>
-                                </div>
-                                <CardDescription className="text-zinc-400 text-xs">Open a new 1-hour slot for personal training</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handleAddSlot} className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="start" className="text-zinc-300">Start Time</Label>
-                                        <Input
-                                            id="start"
-                                            type="datetime-local"
-                                            value={startTime}
-                                            onChange={(e) => setStartTime(e.target.value)}
-                                            required
-                                            className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500"
-                                        />
+                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col lg:col-span-2 animate-in slide-in-from-bottom-4 duration-500 h-full min-h-[300px]">
+                        <CardHeader className="bg-zinc-900/50 p-6 pb-5 border-b border-white/5">
+                            <CardTitle className="text-white text-xl flex items-center gap-2">
+                                <Users size={20} className="text-blue-400" /> Assigned Group Classes
+                            </CardTitle>
+                            <CardDescription className="text-zinc-400 mt-1.5">Classes you are leading</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 flex-1 overflow-hidden relative">
+                            <div className="absolute inset-0 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-12">
+                                {isLoading ? (
+                                    <div className="space-y-3 animate-pulse">
+                                        {[1, 2].map(i => <div key={i} className="h-20 bg-zinc-800/50 rounded-xl" />)}
                                     </div>
-                                    <Button
-                                        type="submit"
-                                        className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2"
-                                        disabled={addSlotMutation.isPending}
-                                    >
-                                        {addSlotMutation.isPending ? "Adding..." : "Add 1-Hour Slot"}
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* RIGHT COLUMN: AGENDA */}
-                    <div className="lg:col-span-2 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-                        {/* GROUP CLASSES */}
-                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col">
-                            <CardHeader className="bg-zinc-900/50 pb-5 border-b border-white/5">
-                                <CardTitle className="text-white text-xl flex items-center gap-2">
-                                    <Users size={20} className="text-blue-400" /> Assigned Group Classes
-                                </CardTitle>
-                                <CardDescription className="text-zinc-400">Classes you are leading</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-0 flex-1 min-h-[200px] overflow-hidden relative">
-                                <div className="absolute inset-0 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    {isLoading ? (
-                                        <div className="space-y-3 animate-pulse">
-                                            {[1, 2].map(i => <div key={i} className="h-20 bg-zinc-800/50 rounded-xl" />)}
-                                        </div>
-                                    ) : agenda?.assignedClasses.length ? (
-                                        <div className="space-y-3">
-                                            {agenda.assignedClasses.map(cls => (
-                                                <div key={cls.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-zinc-950/50 border border-white/5 rounded-xl hover:border-blue-500/30 transition-colors gap-4">
-                                                    <div>
-                                                        <p className="font-bold text-white text-base">{cls.name}</p>
-                                                        <div className="flex items-center text-xs text-zinc-500 mt-1 font-medium bg-zinc-900 px-2 py-1 rounded w-fit">
-                                                            <Clock size={12} className="mr-1.5 text-blue-400" />
-                                                            {formatDateTime(cls.startTime)} <ArrowRight size={10} className="mx-1" /> {formatDateTime(cls.endTime).split(', ')[1]}
-                                                        </div>
-                                                    </div>
-                                                    <div className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
-                                                        {cls.attendeesCount} Enrolled
+                                ) : agenda?.assignedClasses.length ? (
+                                    <div className="space-y-3">
+                                        {agenda.assignedClasses.map(cls => (
+                                            <div key={cls.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-zinc-950/50 border border-white/5 rounded-xl hover:border-blue-500/30 transition-colors gap-4 relative z-10">
+                                                <div>
+                                                    <p className="font-bold text-white text-base">{cls.name}</p>
+                                                    <div className="flex items-center text-xs text-zinc-500 mt-1 font-medium bg-zinc-900 px-2 py-1 rounded w-fit">
+                                                        <Clock size={12} className="mr-1.5 text-blue-400" />
+                                                        {formatDateTime(cls.startTime)} <ArrowRight size={10} className="mx-1" /> {formatDateTime(cls.endTime).split(', ')[1]}
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex h-full items-center justify-center">
-                                            <p className="text-zinc-500 font-medium">No upcoming classes assigned.</p>
-                                        </div>
-                                    )}
+                                                <div className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
+                                                    {cls.attendeesCount} Enrolled
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex h-full items-center justify-center">
+                                        <p className="text-zinc-500 font-medium">No upcoming classes assigned.</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-950/0 pointer-events-none z-20" />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl lg:col-span-1 animate-in slide-in-from-left-4 duration-500 h-full flex flex-col">
+                        <CardHeader className="bg-zinc-900/50 p-6 pb-5 border-b border-white/5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <CalendarPlus size={18} className="text-orange-500" />
+                                <CardTitle className="text-white text-xl">Add Availability</CardTitle>
+                            </div>
+                            <CardDescription className="text-zinc-400 mt-1.5 text-xs">Open a new 1-hour slot for personal training</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-0 flex-1">
+                            <form onSubmit={handleAddSlot} className="space-y-4">
+                                <div className="space-y-2 mt-4">
+                                    <Label htmlFor="start" className="text-zinc-300">Start Time</Label>
+                                    <Input
+                                        id="start"
+                                        type="datetime-local"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        required
+                                        className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500"
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <Button
+                                    type="submit"
+                                    className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2"
+                                    disabled={addSlotMutation.isPending}
+                                >
+                                    {addSlotMutation.isPending ? "Adding..." : "Add 1-Hour Slot"}
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
 
-                        {/* TRAINER SLOTS */}
-                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col">
-                            <CardHeader className="bg-zinc-900/50 pb-5 border-b border-white/5">
-                                <CardTitle className="text-white text-xl flex items-center gap-2">
-                                    <Clock size={20} className="text-orange-500" /> My 1:1 Slots
-                                </CardTitle>
-                                <CardDescription className="text-zinc-400">Your personal training schedule</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-0 flex-1 min-h-[300px] overflow-hidden relative">
-                                <div className="absolute inset-0 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    {isLoading ? (
-                                        <div className="space-y-3 animate-pulse">
-                                            {[1, 2, 3].map(i => <div key={i} className="h-16 bg-zinc-800/50 rounded-xl" />)}
-                                        </div>
-                                    ) : agenda?.trainerSlots.length ? (
-                                        <div className="space-y-3">
-                                            {agenda.trainerSlots.map(slot => {
-                                                const isAvailable = slot.status === "Available";
-                                                const isBooked = slot.status === "Booked";
+                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col lg:col-span-2 animate-in slide-in-from-bottom-4 duration-500 h-[286px]">
+                        <CardHeader className="bg-zinc-900/50 p-6 pb-5 border-b border-white/5">
+                            <CardTitle className="text-white text-xl flex items-center gap-2">
+                                <Clock size={20} className="text-orange-500" /> My 1:1 Slots
+                            </CardTitle>
+                            <CardDescription className="text-zinc-400 mt-1.5">Your personal training schedule</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 flex-1 overflow-hidden relative">
+                            <div className="absolute inset-0 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-12">
+                                {isLoading ? (
+                                    <div className="space-y-3 animate-pulse">
+                                        {[1, 2, 3].map(i => <div key={i} className="h-16 bg-zinc-800/50 rounded-xl" />)}
+                                    </div>
+                                ) : agenda?.trainerSlots.length ? (
+                                    <div className="space-y-3">
+                                        {agenda.trainerSlots.map(slot => {
+                                            const isAvailable = slot.status === "Available";
+                                            const isBooked = slot.status === "Booked";
 
-                                                return (
-                                                    <div key={slot.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-zinc-950/50 border border-white/5 rounded-xl hover:border-orange-500/30 transition-colors gap-4">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="w-2 h-2 rounded-full bg-orange-500" />
-                                                                <p className="font-bold text-white text-sm">1:1 Session</p>
-                                                            </div>
-                                                            <p className="text-xs text-zinc-500 font-medium ml-4">{formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime).split(', ')[1]}</p>
+                                            return (
+                                                <div key={slot.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-zinc-950/50 border border-white/5 rounded-xl hover:border-orange-500/30 transition-colors gap-4 relative z-10">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="w-2 h-2 rounded-full bg-orange-500" />
+                                                            <p className="font-bold text-white text-sm">1:1 Session</p>
                                                         </div>
-
-                                                        <div className="flex items-center gap-3 shrink-0 ml-4 sm:ml-0">
-                                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                                                                isAvailable ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                                                                    isBooked ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                                                        "bg-zinc-800 text-zinc-400 border-white/5"
-                                                            }`}>
-                                                                {slot.status}
-                                                            </span>
-                                                            
-                                                            {slot.status !== "Cancelled" && slot.status !== "Completed" && (
-                                                                <AlertDialog>
-                                                                    <AlertDialogTrigger asChild>
-                                                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 text-xs">Cancel</Button>
-                                                                    </AlertDialogTrigger>
-                                                                    <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
-                                                                        <AlertDialogHeader>
-                                                                            <AlertDialogTitle>Cancel Work Slot</AlertDialogTitle>
-                                                                            <AlertDialogDescription className="text-zinc-400">
-                                                                                Are you sure you want to cancel this availability? If a client has already booked it, their reservation will also be cancelled.
-                                                                            </AlertDialogDescription>
-                                                                        </AlertDialogHeader>
-                                                                        <AlertDialogFooter>
-                                                                            <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
-                                                                            <AlertDialogAction
-                                                                                onClick={() => cancelSlotMutation.mutate(slot.id)}
-                                                                                className="bg-red-600 hover:bg-red-700 text-white border-none"
-                                                                                disabled={cancelSlotMutation.isPending}
-                                                                            >
-                                                                                {cancelSlotMutation.isPending ? "Cancelling..." : "Yes, cancel slot"}
-                                                                            </AlertDialogAction>
-                                                                        </AlertDialogFooter>
-                                                                    </AlertDialogContent>
-                                                                </AlertDialog>
-                                                            )}
-                                                        </div>
+                                                        <p className="text-xs text-zinc-500 font-medium ml-4">{formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime).split(', ')[1]}</p>
                                                     </div>
-                                                )
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="flex h-full items-center justify-center">
-                                            <p className="text-zinc-500 font-medium">You haven't opened any slots yet.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+
+                                                    <div className="flex items-center gap-3 shrink-0 ml-4 sm:ml-0">
+                                                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                                                            isAvailable ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                                                                isBooked ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                                                    "bg-zinc-800 text-zinc-400 border-white/5"
+                                                        }`}>
+                                                            {slot.status}
+                                                        </span>
+
+                                                        {slot.status !== "Cancelled" && slot.status !== "Completed" && (
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 text-xs">Cancel</Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Cancel Work Slot</AlertDialogTitle>
+                                                                        <AlertDialogDescription className="text-zinc-400">
+                                                                            Are you sure you want to cancel this availability? If a client has already booked it, their reservation will also be cancelled.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
+                                                                        <AlertDialogAction
+                                                                            onClick={() => cancelSlotMutation.mutate(slot.id)}
+                                                                            className="bg-red-600 hover:bg-red-700 text-white border-none"
+                                                                            disabled={cancelSlotMutation.isPending}
+                                                                        >
+                                                                            {cancelSlotMutation.isPending ? "Cancelling..." : "Yes, cancel slot"}
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="flex h-full items-center justify-center">
+                                        <p className="text-zinc-500 font-medium">You haven't opened any slots yet.</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-zinc-950/0 pointer-events-none z-20" />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>

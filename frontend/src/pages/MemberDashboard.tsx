@@ -31,7 +31,7 @@ export default function MemberDashboard() {
     const { user, logout } = useAuth()
     const queryClient = useQueryClient()
     const [isManaging, setIsManaging] = useState(false)
-    
+
     const { data: subscription, isLoading: isSubLoading } = useQuery<Subscription | null>({
         queryKey: ['my-subscription'],
         queryFn: async () => {
@@ -85,34 +85,34 @@ export default function MemberDashboard() {
                         <LogOut size={18} className="mr-2" /> Log out
                     </Button>
                 </div>
-
+                
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* LEFT COLUMN: PROFILE INFO */}
                     <div className="lg:col-span-1 space-y-8 animate-in slide-in-from-left-4 duration-500">
-                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl overflow-hidden relative group">
+                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl overflow-hidden relative group h-full">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
-                            <CardContent className="p-6 flex flex-col items-center text-center">
+                            <CardContent className="p-6 flex flex-col items-center justify-center h-full text-center">
                                 <div className="w-24 h-24 rounded-full bg-zinc-950 border-2 border-orange-500/50 mb-4 flex items-center justify-center relative shadow-[0_0_20px_rgba(249,115,22,0.1)] group-hover:border-orange-500 transition-colors">
                                     <UserCircle size={48} className="text-zinc-600" />
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-1">{user?.firstName} {user?.lastName}</h3>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-4">{user?.email}</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-6">{user?.email}</p>
 
-                                <div className="w-full h-10 bg-zinc-950/50 border border-white/5 rounded-lg flex items-center justify-center text-zinc-500 text-xs font-medium border-dashed cursor-not-allowed">
+                                <div className="w-full mt-auto bg-zinc-950/50 border border-white/5 rounded-lg flex items-center justify-center text-zinc-500 text-xs font-medium border-dashed cursor-not-allowed py-3">
                                     PLACEHOLDER: Profile Settings
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* RIGHT COLUMN: SUB MANAAGEMENT */}
+                    {/* RIGHT COLUMN: SUB MANAGEMENT */}
                     <div className="lg:col-span-2 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col h-full">
-                            <CardHeader className="bg-zinc-900/50 pb-5 border-b border-white/5">
+                            <CardHeader className="bg-zinc-900/50 p-6 pb-5 border-b border-white/5">
                                 <CardTitle className="text-white text-xl flex items-center gap-2">
                                     <Award size={20} className="text-orange-500" /> Membership Status
                                 </CardTitle>
-                                <CardDescription className="text-zinc-400">Manage your gym access and plans</CardDescription>
+                                <CardDescription className="text-zinc-400 mt-1.5">Manage your gym access and plans</CardDescription>
                             </CardHeader>
                             <CardContent className="p-6 flex-1 flex flex-col justify-center relative">
                                 {isSubLoading ? (
