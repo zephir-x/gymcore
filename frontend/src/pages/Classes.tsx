@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 /* INTERFACES */
 interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number }
 interface Reservation { reservationId: string; targetId: string; type: string }
+interface Subscription { subscriptionId: string; tierName: string; }
 
 /* COMPONENT */
 export default function Classes() {
@@ -27,6 +28,18 @@ export default function Classes() {
         queryKey: ['my-reservations'],
         queryFn: async () => { const res = await api.get('/api/bookings/my-reservations'); return res.data }
     })
+    
+    const { data: subscription } = useQuery<Subscription | null>({
+        queryKey: ['my-subscription'],
+        queryFn: async () => {
+            try { return (await api.get('/api/subscriptions/my-subscription')).data }
+            catch { return null }
+        },
+        retry: false
+    })
+
+    const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
+        (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
 
     /* MUTATIONS */
     const bookMutation = useMutation({
@@ -135,20 +148,30 @@ export default function Classes() {
                                                     <Users size={12} className="mr-1.5 text-orange-500" />
                                                     {isFull ? <span className="text-red-400 font-bold">Full ({cls.maxAttendees}/{cls.maxAttendees})</span> : <span>{spotsLeft} Spots Left</span>}
                                                 </div>
+                                                
+                                                {discountBadge && (
+                                                    <div className="flex items-center bg-red-500/10 px-2 py-1.5 rounded-lg border border-red-500/20 text-red-400 shrink-0 font-bold">
+                                                        {discountBadge} OFF
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
-                                        <div className="w-full xl:w-auto shrink-0 mt-2 xl:mt-0">
+                                        <div className="w-full xl:w-auto shrink-0 mt-2 xl:mt-0 relative z-10">
                                             <Button
                                                 onClick={() => bookMutation.mutate(cls.id)}
-                                                disabled={isFull || isBooked || bookMutation.isPending}
+                                                disabled={!subscription || isFull || isBooked || bookMutation.isPending}
                                                 className={`w-full xl:w-[140px] h-10 md:h-11 font-bold border-none transition-all duration-300 shadow-md ${
-                                                    isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                        isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                            "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                    !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                        isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                            isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
                                                 }`}
                                             >
-                                                {bookMutation.isPending ? "Processing..." : isBooked ? <><CheckCircle2 size={16} /> Booked</> : isFull ? "Full" : "Book Class"}
+                                                {bookMutation.isPending ? "Processing..." :
+                                                    !subscription ? "Requires Plan" :
+                                                        isBooked ? <><CheckCircle2 size={16} /> Booked</> :
+                                                            isFull ? "Full" : "Book Class"}
                                             </Button>
                                         </div>
                                     </div>

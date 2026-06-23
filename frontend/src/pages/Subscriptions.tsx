@@ -33,7 +33,7 @@ export default function Subscriptions() {
         queryKey: ['my-subscription'],
         queryFn: async () => {
             try {
-                return (await api.get('/api/subscriptions/my')).data
+                return (await api.get('/api/subscriptions/my-subscription')).data
             } catch (error: any) {
                 if (error.response?.status === 404) return null
                 throw error

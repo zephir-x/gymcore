@@ -26,7 +26,7 @@ namespace GymCore.Infrastructure.Data
             await context.SaveChangesAsync();
             
             // Rooms & Facilities
-            var mainGym = new Room("Main Gym Floor", 100, null); 
+            var mainGym = new Room("Main Gym Floor", 100, basicTier.Id); 
             var functionalZone = new Room("Functional Training Zone", 30, basicTier.Id); 
             var yogaStudio = new Room("Yoga & Pilates Studio", 20, basicTier.Id); 
             var cardioZone = new Room("Cardio & Fitness Zone", 40, proTier.Id); 

@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useMutation } from "@tanstack/react-query"
+import {useMutation, useQueryClient} from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -21,6 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function Login() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const { login } = useAuth()
 
     const form = useForm<LoginFormValues>({
@@ -39,18 +40,12 @@ export default function Login() {
         },
         onSuccess: (data) => {
             login(data.token)
+            queryClient.removeQueries()
             navigate('/')
         },
         onError: (error: any) => {
             console.error("Login error:", error.response?.data || error.message)
-
-            const errorMessage =
-                error.response?.data?.detail ||
-                error.response?.data?.Message ||
-                (typeof error.response?.data === 'string' ? error.response?.data : null) ||
-                "Incorrect email or password. Please try again.";
-
-            toast.error("Access Denied", { description: errorMessage })
+            toast.error("Access Denied", { description: "Incorrect email or password. Please try again." })
         }
     })
 

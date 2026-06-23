@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 /* INTERFACES */
 interface Coach { id: string; firstName: string; lastName: string }
 interface TrainerSlot { id: string; startTime: string; endTime: string }
+interface Subscription { subscriptionId: string; tierName: string; }
 
 /* COMPONENT */
 export default function PersonalTraining() {
@@ -34,6 +35,18 @@ export default function PersonalTraining() {
         queryFn: async () => { const res = await api.get(`/api/bookings/coaches/${selectedCoachId}/slots`); return res.data },
         enabled: !!selectedCoachId
     })
+    
+    const { data: subscription } = useQuery<Subscription | null>({
+        queryKey: ['my-subscription'],
+        queryFn: async () => {
+            try { return (await api.get('/api/subscriptions/my-subscription')).data }
+            catch { return null }
+        },
+        retry: false
+    })
+
+    const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
+        (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
 
     /* MUTATIONS */
     const bookSlotMutation = useMutation({
@@ -145,21 +158,34 @@ export default function PersonalTraining() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:pr-4">
                                             {dailySlots.map(slot => (
-                                                <div key={slot.id} className="flex justify-between items-center p-4 rounded-xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 transition-colors group">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-zinc-950 rounded-lg border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                                <div key={slot.id} className="relative overflow-hidden flex justify-between items-center p-4 rounded-xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 transition-colors group">
+                                                    <div className="flex items-center gap-3 relative z-10">
+                                                        <div className="p-2 bg-zinc-950 rounded-lg border border-white/5 group-hover:border-orange-500/30 transition-colors shrink-0">
                                                             <Clock size={16} className="text-zinc-400 group-hover:text-orange-500 transition-colors" />
                                                         </div>
-                                                        <span className="font-bold text-white">{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</span>
+                                                        <span className="font-bold text-white whitespace-nowrap">
+                                                            {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                                                        </span>
+
+                                                        {discountBadge && (
+                                                            <span className="ml-1 px-2 py-0.5 rounded text-[10px] font-black bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+                                                                {discountBadge} OFF
+                                                            </span>
+                                                        )}
                                                     </div>
+
                                                     <Button
                                                         onClick={() => bookSlotMutation.mutate(slot.id)}
-                                                        disabled={bookSlotMutation.isPending}
-                                                        className="font-bold h-9 bg-zinc-800 text-zinc-300 hover:bg-orange-500 hover:text-white transition-colors"
+                                                        disabled={!subscription || bookSlotMutation.isPending}
+                                                        className={`font-bold h-9 relative z-10 transition-colors shrink-0 ml-2 ${
+                                                            !subscription
+                                                                ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                                                                : "bg-zinc-800 text-zinc-300 hover:bg-orange-500 hover:text-white"
+                                                        }`}
                                                     >
-                                                        {bookSlotMutation.isPending ? "..." : "Book"}
+                                                        {bookSlotMutation.isPending ? "..." : !subscription ? "Requires Plan" : "Book"}
                                                     </Button>
                                                 </div>
                                             ))}

@@ -32,7 +32,7 @@ export default function Home() {
 
     const { data: subscription, isLoading: isSubscriptionLoading } = useQuery<Subscription | null>({
         queryKey: ['my-subscription'],
-        queryFn: async () => { const res = await api.get('/api/subscriptions/my'); return res.data }, retry: false
+        queryFn: async () => { const res = await api.get('/api/subscriptions/my-subscription'); return res.data }, retry: false
     })
 
     const { data: coaches, isLoading: isCoachesLoading } = useQuery<Coach[]>({
@@ -98,10 +98,13 @@ export default function Home() {
     const pastWorkoutsCount = reservations?.filter(r =>
         new Date(r.endTime).getTime() < nowTime && r.status !== "Class Cancelled by Gym"
     ).length || 0
-    
+
     const upcomingBookings = reservations?.filter(r =>
         new Date(r.endTime).getTime() >= nowTime
     ) || []
+    
+    const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
+        (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
     
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
@@ -268,26 +271,34 @@ export default function Home() {
                                                 <div key={cls.id} className={`w-[300px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden ${isFull ? "opacity-80" : ""}`}>
                                                     <div className="flex justify-between items-start mb-4">
                                                         <div>
-                                                            <h4 className="text-white font-bold text-lg leading-tight truncate max-w-[150px]">{cls.name}</h4>
+                                                            <h4 className="text-white font-bold text-lg leading-tight truncate max-w-[130px]">{cls.name}</h4>
                                                             <p className="text-orange-500 text-sm font-medium mt-0.5">{formatDate(cls.startTime)}</p>
                                                         </div>
-                                                        {isFull ? <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Full</span>
-                                                            : <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">{spotsLeft} left</span>}
-                                                    </div>
-                                                    <div className="flex items-center text-zinc-400 text-xs font-semibold bg-zinc-950 border border-white/5 px-3 py-2 rounded-lg mb-5 w-fit">
-                                                        <Clock size={14} className="mr-2 text-orange-500" />
-                                                        {formatTime(cls.startTime)} - {formatTime(cls.endTime)}
+                                                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                                            {isFull ? <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Full</span>
+                                                                : <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">{spotsLeft} left</span>}
+
+                                                            {discountBadge && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                                                                    {discountBadge} OFF
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <Button
                                                         className={`w-full font-bold h-10 border-none transition-all duration-300 shadow-md ${
-                                                            isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                                isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                    "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                            !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                                    isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                        "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
                                                         }`}
                                                         onClick={() => bookMutation.mutate(cls.id)}
-                                                        disabled={isFull || isBooked || bookMutation.isPending}
+                                                        disabled={!subscription || isFull || isBooked || bookMutation.isPending}
                                                     >
-                                                        {bookMutation.isPending ? "Processing..." : isBooked ? <><CheckCircle2 size={16} /> Booked</> : isFull ? "Waitlist (Soon)" : "Book Spot"}
+                                                        {bookMutation.isPending ? "Processing..." :
+                                                            !subscription ? "Requires Plan" :
+                                                                isBooked ? <><CheckCircle2 size={16} /> Booked</> :
+                                                                    isFull ? "Waitlist (Soon)" : "Book Spot"}
                                                     </Button>
                                                 </div>
                                             )
@@ -327,7 +338,6 @@ export default function Home() {
                                     <>
                                         {coaches.slice(0, 5).map((coach) => (
                                             <div key={coach.id} className="w-[280px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between">
-
                                                 <div className="flex items-center gap-4 mb-4">
                                                     <Avatar className="h-12 w-12 border border-orange-500 shrink-0">
                                                         <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold">
