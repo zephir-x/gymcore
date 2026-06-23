@@ -5,14 +5,13 @@ import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Users, DollarSign, Dumbbell } from 'lucide-react'
+import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert } from 'lucide-react'
 
 import {
     Dialog,
@@ -33,6 +32,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+// INTERFACES
 interface Room {
     id: string
     name: string
@@ -84,21 +84,21 @@ export default function AdminDashboard() {
     const { logout } = useAuth()
     const queryClient = useQueryClient()
 
-    // Room states
+    // ROOM STATES
     const [isRoomModalOpen, setIsRoomModalOpen] = React.useState(false)
     const [editingRoomId, setEditingRoomId] = React.useState<string | null>(null)
     const [roomName, setRoomName] = React.useState("")
     const [roomCapacity, setRoomCapacity] = React.useState("")
     const [requiredTierId, setRequiredTierId] = React.useState<string>("none")
 
-    // Create coach states
+    // COACH STATES
     const [isCoachModalOpen, setIsCoachModalOpen] = React.useState(false)
     const [coachEmail, setCoachEmail] = React.useState("")
     const [coachFirstName, setCoachFirstName] = React.useState("")
     const [coachLastName, setCoachLastName] = React.useState("")
     const [coachPassword, setCoachPassword] = React.useState("")
 
-    // Edit user states
+    // USER STATES
     const [isEditUserModalOpen, setIsEditUserModalOpen] = React.useState(false)
     const [selectedUserId, setSelectedUserId] = React.useState<string | null>(null)
     const [editFirstName, setEditFirstName] = React.useState("")
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     const [editEmail, setEditEmail] = React.useState("")
     const [editPassword, setEditPassword] = React.useState("")
 
-    // Schedule states
+    // SCHEDULE STATES
     const [isClassModalOpen, setIsClassModalOpen] = React.useState(false)
     const [className, setClassName] = React.useState("")
     const [classCoachId, setClassCoachId] = React.useState("")
@@ -114,8 +114,8 @@ export default function AdminDashboard() {
     const [classStartTime, setClassStartTime] = React.useState("")
     const [classEndTime, setClassEndTime] = React.useState("")
     const [classMaxAttendees, setClassMaxAttendees] = React.useState("")
-    
-    // Queries
+
+    // QUERIES
     const { data: rooms, isLoading: isRoomsLoading } = useQuery<Room[]>({
         queryKey: ['admin-rooms'],
         queryFn: async () => (await api.get('/api/admin/rooms')).data
@@ -145,11 +145,10 @@ export default function AdminDashboard() {
         queryKey: ['admin-stats'],
         queryFn: async () => (await api.get('/api/admin/statistics')).data
     })
-
-    // Colors for the chart (Blue, Purple, Gold and Gray for "Without Sub")
-    const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#94a3b8', '#10b981', '#ef4444'];
     
-    // Room mutations
+    const pieColors = ['#f97316', '#8b5cf6', '#3b82f6', '#10b981', '#fbbf24', '#ef4444'];
+
+    // ROOM MUTATIONS
     const saveRoomMutation = useMutation({
         mutationFn: async () => {
             const payload = {
@@ -190,7 +189,7 @@ export default function AdminDashboard() {
         }
     })
 
-    // User mutations
+    // USER MUTATIONS
     const createCoachMutation = useMutation({
         mutationFn: async () => {
             return await api.post('/api/admin/coaches', {
@@ -219,13 +218,13 @@ export default function AdminDashboard() {
                 firstName: editFirstName,
                 lastName: editLastName,
                 email: editEmail,
-                newPassword: editPassword || null // Send null if empty
+                newPassword: editPassword || null
             })
         },
         onSuccess: async () => {
             toast.success("User Profile Updated", { description: "Changes and credentials updated successfully." })
             setIsEditUserModalOpen(false)
-            setEditPassword("") // Clear password field
+            setEditPassword("")
             await queryClient.invalidateQueries({ queryKey: ['admin-users'] })
         },
         onError: (error: any) => {
@@ -246,14 +245,13 @@ export default function AdminDashboard() {
         }
     })
 
-    // Schedule mutations
+    // SCHEDULE MUTATIONS
     const createClassMutation = useMutation({
         mutationFn: async () => {
             return await api.post('/api/admin/classes', {
                 name: className,
                 coachId: classCoachId,
                 roomId: classRoomId,
-                // We convert strings from DateTime-Local input to ISO format accepted by C#
                 startTime: new Date(classStartTime).toISOString(),
                 endTime: new Date(classEndTime).toISOString(),
                 maxAttendees: parseInt(classMaxAttendees)
@@ -269,7 +267,7 @@ export default function AdminDashboard() {
             console.error(error)
             toast.error("Error", { description: "Scheduling failed." })
         }
-        
+
     })
 
     const deleteClassMutation = useMutation({
@@ -283,8 +281,8 @@ export default function AdminDashboard() {
             toast.error("Action Blocked", { description: "Failed to delete class." })
         }
     })
-    
-    // Handlers
+
+    // HANDLERS
     const handleOpenCreateModal = () => {
         resetRoomForm()
         setIsRoomModalOpen(true)
@@ -315,63 +313,74 @@ export default function AdminDashboard() {
         createCoachMutation.mutate()
     }
 
-    // Unified handler for opening the Edit User modal
     const handleOpenEditUser = (user: SystemUser) => {
         setSelectedUserId(user.id)
         setEditFirstName(user.firstName)
         setEditLastName(user.lastName)
         setEditEmail(user.email)
-        setEditPassword("") // Ensure password field is reset when opening
+        setEditPassword("")
         setIsEditUserModalOpen(true)
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 md:p-12 w-full">
-            <div className="max-w-6xl mx-auto space-y-8 w-full">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900">Admin Command Center</h1>
-                        <p className="text-slate-600 mt-1">Manage infrastructure, schedule, and users.</p>
+        <div className="min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans p-4 md:p-12 overflow-y-auto overflow-x-hidden select-none relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* AMBIENT GLOW EFFECTS */}
+            <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
+                {/* HEADER */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0 gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-zinc-900/80 rounded-xl border border-white/5">
+                            <ShieldAlert className="text-orange-500" size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Admin Command Center</h1>
+                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Manage infrastructure, schedule, and system users</p>
+                        </div>
                     </div>
-                    <Button variant="outline" onClick={logout} className="border-slate-300 text-slate-700">Log out</Button>
+                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
+                        <LogOut size={18} className="mr-2" /> Log out
+                    </Button>
                 </div>
 
-                <Tabs defaultValue="rooms" className="w-full flex flex-col gap-6">
-                    <TabsList className="flex flex-col sm:flex-row w-full h-auto bg-slate-200/60 rounded-xl p-1 gap-1">
-                        <TabsTrigger value="statistics" className="flex-1 text-base font-medium rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm py-3">Statistics</TabsTrigger>
-                        <TabsTrigger value="users" className="flex-1 text-base font-medium rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm py-3">Users</TabsTrigger>
-                        <TabsTrigger value="rooms" className="flex-1 text-base font-medium rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm py-3">Rooms</TabsTrigger>
-                        <TabsTrigger value="schedule" className="flex-1 text-base font-medium rounded-lg data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm py-3">Schedule</TabsTrigger>
+                <Tabs defaultValue="statistics" className="w-full flex flex-col gap-8">
+                    <TabsList className="flex flex-col sm:flex-row w-full h-auto bg-zinc-900/40 border border-white/5 rounded-2xl p-1.5 gap-1 backdrop-blur-md">
+                        <TabsTrigger value="statistics" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Statistics</TabsTrigger>
+                        <TabsTrigger value="users" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Users</TabsTrigger>
+                        <TabsTrigger value="rooms" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Rooms</TabsTrigger>
+                        <TabsTrigger value="schedule" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Schedule</TabsTrigger>
                     </TabsList>
 
-                    {/* Statistics */}
-                    <TabsContent value="statistics" className="w-full focus:outline-none space-y-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-800">Business Overview</h2>
-                            <p className="text-sm text-slate-500">Key Performance Indicators and revenue metrics.</p>
-                        </div>
-
+                    {/* STATISTICS TAB */}
+                    <TabsContent value="statistics" className="w-full outline-none ring-0 focus-visible:ring-0 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                         {isStatsLoading || !stats ? (
-                            <div className="p-12 text-center text-slate-500 animate-pulse">Calculating complex metrics...</div>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+                                <div className="lg:col-span-2 h-80 bg-zinc-900/50 rounded-3xl border border-white/5" />
+                                <div className="space-y-4">
+                                    <div className="h-24 bg-zinc-900/50 rounded-2xl border border-white/5" />
+                                    <div className="h-24 bg-zinc-900/50 rounded-2xl border border-white/5" />
+                                    <div className="h-24 bg-zinc-900/50 rounded-2xl border border-white/5" />
+                                </div>
+                            </div>
                         ) : (
-                            /* Main mesh container */
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
-                                {/* Pie chart */}
-                                <Card className="shadow-sm border-slate-200 lg:col-span-2 h-full flex flex-col justify-between">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle>Subscription Distribution</CardTitle>
-                                        <CardDescription>Visual breakdown of active member plans and churn.</CardDescription>
+                                {/* pie chart */}
+                                <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md lg:col-span-2 h-full flex flex-col justify-between shadow-xl outline-none ring-0">
+                                    <CardHeader className="p-6 pb-2">
+                                        <CardTitle className="text-white">Subscription Distribution</CardTitle>
+                                        <CardDescription className="text-zinc-400">Visual breakdown of active member plans and churn.</CardDescription>
                                     </CardHeader>
-                                    <CardContent className="h-80 pt-0">
+                                    <CardContent className="h-80 p-6 pt-0">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
                                                     data={stats.distribution.map((entry, index) => ({
                                                         ...entry,
                                                         fill: entry.tierName === "Without Sub"
-                                                            ? "#94a3b8"
-                                                            : PIE_COLORS[index % PIE_COLORS.length]
+                                                            ? "#3f3f46"
+                                                            : pieColors[index % pieColors.length]
                                                     }))}
                                                     cx="50%"
                                                     cy="50%"
@@ -380,51 +389,52 @@ export default function AdminDashboard() {
                                                     paddingAngle={5}
                                                     dataKey="count"
                                                     nameKey="tierName"
+                                                    stroke="none"
                                                 />
-                                                <Tooltip formatter={(value: any, name: any) => [value, name]} />
-                                                <Legend verticalAlign="bottom" height={36} />
+                                                <Tooltip
+                                                    contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px', color: '#fff' }}
+                                                    itemStyle={{ color: '#fff' }}
+                                                />
+                                                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ color: '#a1a1aa', fontSize: '12px' }} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </CardContent>
                                 </Card>
 
-                                {/* KPI tiles arranged vertically */}
+                                {/* KPI TILES */}
                                 <div className="lg:col-span-1 flex flex-col gap-4 h-full justify-between">
-                                    {/* Active members */}
-                                    <Card className="shadow-sm border-slate-200 flex-1 flex items-center">
-                                        <CardContent className="p-5 flex items-center space-x-4 w-full">
-                                            <div className="p-3 bg-blue-50 rounded-xl text-blue-600 flex-shrink-0">
+                                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md flex-1 flex items-center group hover:bg-zinc-900/50 transition-colors outline-none ring-0">
+                                        <CardContent className="p-6 flex items-center gap-5 w-full">
+                                            <div className="p-3.5 bg-zinc-950 rounded-xl border border-white/5 group-hover:border-blue-500/30 transition-colors text-blue-500 shrink-0">
                                                 <Users size={24} />
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Active Members</p>
-                                                <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{stats.totalMembers}</h3>
+                                            <div className="flex flex-col justify-center mt-1">
+                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Active Members</p>
+                                                <h3 className="text-3xl font-black text-white leading-none">{stats.totalMembers}</h3>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    {/* Monthly income */}
-                                    <Card className="shadow-sm border-slate-200 flex-1 flex items-center">
-                                        <CardContent className="p-5 flex items-center space-x-4 w-full">
-                                            <div className="p-3 bg-green-50 rounded-xl text-green-600 flex-shrink-0">
+                                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md flex-1 flex items-center group hover:bg-zinc-900/50 transition-colors outline-none ring-0">
+                                        <CardContent className="p-6 flex items-center gap-5 w-full">
+                                            <div className="p-3.5 bg-zinc-950 rounded-xl border border-white/5 group-hover:border-green-500/30 transition-colors text-green-500 shrink-0">
                                                 <DollarSign size={24} />
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Monthly Revenue (MRR)</p>
-                                                <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{stats.monthlyRevenue.toFixed(2)} PLN</h3>
+                                            <div className="flex flex-col justify-center mt-1">
+                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Monthly Revenue</p>
+                                                <h3 className="text-3xl font-black text-white leading-none">{stats.monthlyRevenue.toFixed(2)} <span className="text-sm text-zinc-500">PLN</span></h3>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    {/* Staff (Coaches) */}
-                                    <Card className="shadow-sm border-slate-200 flex-1 flex items-center">
-                                        <CardContent className="p-5 flex items-center space-x-4 w-full">
-                                            <div className="p-3 bg-purple-50 rounded-xl text-purple-600 flex-shrink-0">
+                                    <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md flex-1 flex items-center group hover:bg-zinc-900/50 transition-colors outline-none ring-0">
+                                        <CardContent className="p-6 flex items-center gap-5 w-full">
+                                            <div className="p-3.5 bg-zinc-950 rounded-xl border border-white/5 group-hover:border-purple-500/30 transition-colors text-purple-500 shrink-0">
                                                 <Dumbbell size={24} />
                                             </div>
-                                            <div>
-                                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Staff (Coaches)</p>
-                                                <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{stats.totalStaff}</h3>
+                                            <div className="flex flex-col justify-center mt-1">
+                                                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Active Staff</p>
+                                                <h3 className="text-3xl font-black text-white leading-none">{stats.totalStaff}</h3>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -433,46 +443,48 @@ export default function AdminDashboard() {
                         )}
                     </TabsContent>
 
-                    {/* Users */}
-                    <TabsContent value="users" className="w-full focus:outline-none space-y-8">
-                        {/* Tab 1: Coaches */}
+                    {/* USERS TAB */}
+                    <TabsContent value="users" className="w-full focus:outline-none space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                        {/* TRAINERS */}
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">Gym Trainers</h2>
-                                </div>
-                                <Button onClick={() => setIsCoachModalOpen(true)} className="bg-primary text-white">
+                                <h2 className="text-xl font-bold text-white">Gym Trainers</h2>
+                                <Button
+                                    onClick={() => setIsCoachModalOpen(true)}
+                                    className="bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white border-none shadow-[0_0_15px_rgba(249,115,22,0.15)] transition-all font-bold"
+                                >
                                     + Add Employee
                                 </Button>
                             </div>
-                            <Card className="shadow-sm border-slate-200 w-full overflow-hidden">
-                                <CardContent className="p-0 w-full overflow-x-auto">
+                            <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md">
+                                <div className="w-full overflow-x-auto">
                                     {isCoachesLoading ? (
-                                        <div className="p-8 text-center text-slate-500 animate-pulse">Loading staff...</div>
+                                        <div className="p-8 text-center text-zinc-500 animate-pulse">Loading staff...</div>
                                     ) : systemCoaches && systemCoaches.length > 0 ? (
-                                        <Table className="w-full">
-                                            <TableHeader className="bg-slate-100">
-                                                <TableRow>
-                                                    <TableHead className="font-semibold text-slate-700">Name</TableHead>
-                                                    <TableHead className="font-semibold text-slate-700">Email</TableHead>
-                                                    <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                                                    <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
+                                        <Table className="w-full border-collapse">
+                                            <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                <TableRow className="border-none hover:bg-transparent">
+                                                    <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
+                                                    <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
+                                                    <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
+                                                    <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {systemCoaches.map((coach) => (
-                                                    <TableRow key={coach.id} className={!coach.isActive ? "bg-slate-50 opacity-60" : ""}>
-                                                        <TableCell className="font-medium text-slate-900">{coach.firstName} {coach.lastName}</TableCell>
-                                                        <TableCell className="text-slate-500">{coach.email}</TableCell>
+                                                    <TableRow key={coach.id} className={`border-b border-white/5 transition-colors ${!coach.isActive ? "bg-zinc-950/50 opacity-60" : "hover:bg-zinc-900/60"}`}>
+                                                        <TableCell className="font-semibold text-white">{coach.firstName} {coach.lastName}</TableCell>
+                                                        <TableCell className="text-zinc-400 text-sm">{coach.email}</TableCell>
                                                         <TableCell>
-                                                            <Badge variant={coach.isActive ? "outline" : "destructive"} className={coach.isActive ? "text-green-600 border-green-200" : ""}>
-                                                                {coach.isActive ? "Active" : "Disabled"}
-                                                            </Badge>
+                                                            {coach.isActive ? (
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Disabled</span>
+                                                            )}
                                                         </TableCell>
                                                         <TableCell className="text-right space-x-2">
-                                                            {/* Unified Edit Button */}
-                                                            <Button variant="outline" size="sm" onClick={() => handleOpenEditUser(coach)}>Edit</Button>
-                                                            <Button variant={coach.isActive ? "destructive" : "default"} size="sm" onClick={() => toggleStatusMutation.mutate(coach.id)}>
+                                                            <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(coach)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
+                                                            <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate(coach.id)} className={coach.isActive ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}>
                                                                 {coach.isActive ? "Disable" : "Enable"}
                                                             </Button>
                                                         </TableCell>
@@ -480,46 +492,43 @@ export default function AdminDashboard() {
                                                 ))}
                                             </TableBody>
                                         </Table>
-                                    ) : <div className="p-8 text-center text-slate-500">No trainers registered.</div>}
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Tab 2: Clients */}
-                        <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">Members</h2>
+                                    ) : <div className="p-8 text-center text-zinc-500 font-medium">No trainers registered.</div>}
                                 </div>
                             </div>
-                            <Card className="shadow-sm border-slate-200 w-full overflow-hidden">
-                                <CardContent className="p-0 w-full overflow-x-auto">
+                        </div>
+
+                        {/* MEMBERS */}
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold text-white">Members Directory</h2>
+                            <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md">
+                                <div className="w-full overflow-x-auto">
                                     {isMembersLoading ? (
-                                        <div className="p-8 text-center text-slate-500 animate-pulse">Loading members...</div>
+                                        <div className="p-8 text-center text-zinc-500 animate-pulse">Loading members...</div>
                                     ) : members && members.length > 0 ? (
-                                        <Table className="w-full">
-                                            <TableHeader className="bg-slate-100">
-                                                <TableRow>
-                                                    <TableHead className="font-semibold text-slate-700">Name</TableHead>
-                                                    <TableHead className="font-semibold text-slate-700">Email</TableHead>
-                                                    <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                                                    <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
+                                        <Table className="w-full border-collapse">
+                                            <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                <TableRow className="border-none hover:bg-transparent">
+                                                    <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
+                                                    <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
+                                                    <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
+                                                    <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {members.map((member) => (
-                                                    <TableRow key={member.id} className={!member.isActive ? "bg-slate-50 opacity-60" : ""}>
-                                                        <TableCell className="font-medium text-slate-900">{member.firstName} {member.lastName}</TableCell>
-                                                        <TableCell className="text-slate-500">{member.email}</TableCell>
+                                                    <TableRow key={member.id} className={`border-b border-white/5 transition-colors ${!member.isActive ? "bg-zinc-950/50 opacity-60" : "hover:bg-zinc-900/60"}`}>
+                                                        <TableCell className="font-semibold text-white">{member.firstName} {member.lastName}</TableCell>
+                                                        <TableCell className="text-zinc-400 text-sm">{member.email}</TableCell>
                                                         <TableCell>
-                                                            <Badge variant={member.isActive ? "outline" : "destructive"} className={member.isActive ? "text-green-600 border-green-200" : ""}>
-                                                                {member.isActive ? "Active" : "Banned"}
-                                                            </Badge>
+                                                            {member.isActive ? (
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Banned</span>
+                                                            )}
                                                         </TableCell>
                                                         <TableCell className="text-right space-x-2">
-                                                            {/* Unified Edit Button */}
-                                                            <Button variant="outline" size="sm" onClick={() => handleOpenEditUser(member)}>Edit</Button>
-                                                            <Button variant={member.isActive ? "destructive" : "default"} size="sm" onClick={() => toggleStatusMutation.mutate(member.id)}>
+                                                            <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(member)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
+                                                            <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate(member.id)} className={member.isActive ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}>
                                                                 {member.isActive ? "Ban" : "Unban"}
                                                             </Button>
                                                         </TableCell>
@@ -527,150 +536,158 @@ export default function AdminDashboard() {
                                                 ))}
                                             </TableBody>
                                         </Table>
-                                    ) : <div className="p-8 text-center text-slate-500">No members registered yet.</div>}
-                                </CardContent>
-                            </Card>
+                                    ) : <div className="p-8 text-center text-zinc-500 font-medium">No members registered yet.</div>}
+                                </div>
+                            </div>
                         </div>
                     </TabsContent>
 
-                    {/* Rooms */}
-                    <TabsContent value="rooms" className="w-full focus:outline-none space-y-4">
+                    {/* ROOMS TAB */}
+                    <TabsContent value="rooms" className="w-full focus:outline-none space-y-4 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800">Facility Rooms</h2>
-                                <p className="text-sm text-slate-500">Manage the physical locations inside your gym.</p>
+                                <h2 className="text-xl font-bold text-white">Facility Rooms</h2>
+                                <p className="text-sm text-zinc-400 mt-1">Manage the physical locations inside your gym.</p>
                             </div>
-                            <Button onClick={handleOpenCreateModal} className="bg-slate-900 hover:bg-slate-800 text-white w-full sm:w-auto">
+                            <Button
+                                onClick={handleOpenCreateModal}
+                                className="bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white border-none shadow-[0_0_15px_rgba(249,115,22,0.15)] transition-all font-bold w-full sm:w-auto"
+                            >
                                 + Add New Room
                             </Button>
                         </div>
 
-                        <Card className="shadow-sm border-slate-200 w-full overflow-hidden">
-                            <CardContent className="p-0 w-full overflow-x-auto">
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md">
+                            <div className="w-full overflow-x-auto">
                                 {isRoomsLoading ? (
-                                    <div className="p-8 text-center text-slate-500 animate-pulse">Loading rooms...</div>
+                                    <div className="p-8 text-center text-zinc-500 animate-pulse">Loading rooms...</div>
                                 ) : rooms && rooms.length > 0 ? (
-                                    <Table className="w-full">
-                                        <TableHeader className="bg-slate-100">
-                                            <TableRow>
-                                                <TableHead className="font-semibold text-slate-700">Room Name</TableHead>
-                                                <TableHead className="font-semibold text-slate-700">Capacity</TableHead>
-                                                <TableHead className="font-semibold text-slate-700">Access Level</TableHead>
-                                                <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
+                                    <Table className="w-full border-collapse">
+                                        <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                            <TableRow className="border-none hover:bg-transparent">
+                                                <TableHead className="font-bold text-zinc-400">Room Name</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Capacity</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Access Level</TableHead>
+                                                <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {rooms.map((room) => (
-                                                <TableRow key={room.id}>
-                                                    <TableCell className="font-medium text-slate-900">{room.name}</TableCell>
+                                                <TableRow key={room.id} className="border-b border-white/5 hover:bg-zinc-900/60 transition-colors">
+                                                    <TableCell className="font-semibold text-white">{room.name}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant="secondary">{room.maxCapacity} people</Badge>
+                                                        <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-zinc-800 text-zinc-300 border border-white/5">{room.maxCapacity} people</span>
                                                     </TableCell>
                                                     <TableCell>
                                                         {room.requiredTierName ? (
-                                                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none">{room.requiredTierName} Only</Badge>
+                                                            <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">{room.requiredTierName} Only</span>
                                                         ) : (
-                                                            <Badge variant="outline" className="text-slate-500">All Members</Badge>
+                                                            <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">All Members</span>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right space-x-2">
-                                                        <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(room)}>Edit</Button>
+                                                        <Button variant="ghost" size="sm" onClick={() => handleOpenEditModal(room)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
 
                                                         <AlertDialog>
                                                             <AlertDialogTrigger asChild>
-                                                                <Button variant="destructive" size="sm">Delete</Button>
+                                                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</Button>
                                                             </AlertDialogTrigger>
-                                                            <AlertDialogContent>
+                                                            <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
                                                                 <AlertDialogHeader>
                                                                     <AlertDialogTitle>Delete Facility Room</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        Are you sure you want to delete <strong>{room.name}</strong>? This action cannot be undone.
+                                                                    <AlertDialogDescription className="text-zinc-400">
+                                                                        Are you sure you want to delete <strong className="text-white">{room.name}</strong>? This action cannot be undone.
                                                                     </AlertDialogDescription>
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Cancel</AlertDialogCancel>
                                                                     <AlertDialogAction
                                                                         onClick={() => deleteRoomMutation.mutate(room.id)}
-                                                                        className="bg-destructive hover:bg-destructive/90"
+                                                                        className="bg-red-600 hover:bg-red-700 text-white border-none"
                                                                     >
                                                                         Yes, delete room
                                                                     </AlertDialogAction>
                                                                 </AlertDialogFooter>
                                                             </AlertDialogContent>
                                                         </AlertDialog>
-
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
                                     </Table>
                                 ) : (
-                                    <div className="p-8 text-center text-slate-500">No rooms configured yet. Add your first room!</div>
+                                    <div className="p-8 text-center text-zinc-500 font-medium">No rooms configured yet. Add your first room!</div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </TabsContent>
 
-                    {/* Schedule */}
-                    <TabsContent value="schedule" className="w-full focus:outline-none space-y-4">
+                    {/* SCHEDULE TAB */}
+                    <TabsContent value="schedule" className="w-full focus:outline-none space-y-4 animate-in slide-in-from-bottom-4 duration-500">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-800">Group Classes Schedule</h2>
-                                <p className="text-sm text-slate-500">Organize sessions, assign coaches and manage capacity.</p>
+                                <h2 className="text-xl font-bold text-white">Group Classes Schedule</h2>
+                                <p className="text-sm text-zinc-400 mt-1">Organize sessions, assign coaches and manage capacity.</p>
                             </div>
-                            <Button onClick={() => setIsClassModalOpen(true)} className="bg-slate-900 hover:bg-slate-800 text-white w-full sm:w-auto">
+                            <Button
+                                onClick={() => setIsClassModalOpen(true)}
+                                className="bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white border-none shadow-[0_0_15px_rgba(249,115,22,0.15)] transition-all font-bold w-full sm:w-auto"
+                            >
                                 + Schedule Class
                             </Button>
                         </div>
 
-                        <Card className="shadow-sm border-slate-200 w-full overflow-hidden">
-                            <CardContent className="p-0 w-full overflow-x-auto">
+                        <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md">
+                            <div className="w-full overflow-x-auto">
                                 {isClassesLoading ? (
-                                    <div className="p-8 text-center text-slate-500 animate-pulse">Loading schedule...</div>
+                                    <div className="p-8 text-center text-zinc-500 animate-pulse">Loading schedule...</div>
                                 ) : adminClasses && adminClasses.length > 0 ? (
-                                    <Table className="w-full">
-                                        <TableHeader className="bg-slate-100">
-                                            <TableRow>
-                                                <TableHead className="font-semibold text-slate-700">Class Name</TableHead>
-                                                <TableHead className="font-semibold text-slate-700">Time</TableHead>
-                                                <TableHead className="font-semibold text-slate-700">Coach</TableHead>
-                                                <TableHead className="font-semibold text-slate-700">Room</TableHead>
-                                                <TableHead className="font-semibold text-slate-700">Attendees</TableHead>
-                                                <TableHead className="text-right font-semibold text-slate-700">Actions</TableHead>
+                                    <Table className="w-full border-collapse">
+                                        <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                            <TableRow className="border-none hover:bg-transparent">
+                                                <TableHead className="font-bold text-zinc-400">Class Name</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Time</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Coach</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Room</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Attendees</TableHead>
+                                                <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {adminClasses.map((cls) => (
-                                                <TableRow key={cls.id} className={cls.isCancelled ? "bg-slate-50 opacity-50" : ""}>
-                                                    <TableCell className="font-medium text-slate-900">
-                                                        {cls.name} {cls.isCancelled && <span className="text-red-500 text-xs ml-2 font-bold">(CANCELLED)</span>}
+                                                <TableRow key={cls.id} className={`border-b border-white/5 transition-colors ${cls.isCancelled ? "bg-zinc-950/50 opacity-50" : "hover:bg-zinc-900/60"}`}>
+                                                    <TableCell className="font-semibold text-white">
+                                                        {cls.name} {cls.isCancelled && <span className="text-red-500 text-[10px] ml-2 font-black tracking-wider uppercase">Cancelled</span>}
                                                     </TableCell>
-                                                    <TableCell className="text-slate-500">
+                                                    <TableCell className="text-zinc-400 text-xs font-medium">
                                                         {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
                                                         {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </TableCell>
-                                                    <TableCell>{cls.coachName}</TableCell>
-                                                    <TableCell><Badge variant="outline">{cls.roomName}</Badge></TableCell>
+                                                    <TableCell className="text-zinc-300">{cls.coachName}</TableCell>
                                                     <TableCell>
-                                                        <span className={cls.currentBookings >= cls.maxAttendees ? "text-red-500 font-bold" : ""}>
-                                                            {cls.currentBookings} / {cls.maxAttendees}
+                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.roomName}</span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className={`font-bold ${cls.currentBookings >= cls.maxAttendees ? "text-red-400" : "text-green-400"}`}>
+                                                            {cls.currentBookings} <span className="text-zinc-500">/ {cls.maxAttendees}</span>
                                                         </span>
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        {/* Ukrywamy przycisk, jeśli klasa jest już anulowana */}
                                                         {!cls.isCancelled && (
                                                             <AlertDialog>
                                                                 <AlertDialogTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">Cancel</Button>
+                                                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Cancel</Button>
                                                                 </AlertDialogTrigger>
-                                                                <AlertDialogContent>
+                                                                <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
                                                                     <AlertDialogHeader>
                                                                         <AlertDialogTitle>Cancel Class</AlertDialogTitle>
-                                                                        <AlertDialogDescription>Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.</AlertDialogDescription>
+                                                                        <AlertDialogDescription className="text-zinc-400">
+                                                                            Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.
+                                                                        </AlertDialogDescription>
                                                                     </AlertDialogHeader>
                                                                     <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Keep it</AlertDialogCancel>
-                                                                        <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-destructive">
+                                                                        <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-red-600 hover:bg-red-700 text-white border-none">
                                                                             Yes, cancel class
                                                                         </AlertDialogAction>
                                                                     </AlertDialogFooter>
@@ -683,149 +700,146 @@ export default function AdminDashboard() {
                                         </TableBody>
                                     </Table>
                                 ) : (
-                                    <div className="p-8 text-center text-slate-500">No classes scheduled yet. Create your first session!</div>
+                                    <div className="p-8 text-center text-zinc-500 font-medium">No classes scheduled yet. Create your first session!</div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
 
-            {/* Room Modal */}
+            {/* MODALS */}
             <Dialog open={isRoomModalOpen} onOpenChange={setIsRoomModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100">
                     <DialogHeader>
-                        <DialogTitle>{editingRoomId ? "Edit Room" : "Create New Room"}</DialogTitle>
-                        <DialogDescription>Define the physical space, capacity, and access restrictions.</DialogDescription>
+                        <DialogTitle className="text-white">{editingRoomId ? "Edit Room" : "Create New Room"}</DialogTitle>
+                        <DialogDescription className="text-zinc-400">Define the physical space, capacity, and access restrictions.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSaveRoom} className="space-y-5 mt-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Room Name</Label>
-                            <Input id="name" value={roomName} onChange={(e) => setRoomName(e.target.value)} required placeholder="e.g. Crossfit Arena" />
+                            <Label htmlFor="name" className="text-zinc-300">Room Name</Label>
+                            <Input id="name" value={roomName} onChange={(e) => setRoomName(e.target.value)} required placeholder="e.g. Crossfit Arena" className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="capacity">Max Capacity</Label>
-                            <Input id="capacity" type="number" min="1" max="500" value={roomCapacity} onChange={(e) => setRoomCapacity(e.target.value)} required />
+                            <Label htmlFor="capacity" className="text-zinc-300">Max Capacity</Label>
+                            <Input id="capacity" type="number" min="1" max="500" value={roomCapacity} onChange={(e) => setRoomCapacity(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                         </div>
 
                         <div className="space-y-2 flex flex-col">
-                            <Label htmlFor="tier">Access Restriction (Tier)</Label>
+                            <Label htmlFor="tier" className="text-zinc-300">Access Restriction (Tier)</Label>
                             <select
                                 id="tier"
                                 value={requiredTierId}
                                 onChange={(e) => setRequiredTierId(e.target.value)}
-                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+                                className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                             >
                                 <option value="none">No Restriction (All Members)</option>
                                 {tiers?.map(tier => (
                                     <option key={tier.id} value={tier.id}>Requires {tier.name} Tier or higher</option>
                                 ))}
                             </select>
-                            <p className="text-xs text-slate-500">Only members with this tier will be able to book classes here.</p>
+                            <p className="text-xs text-zinc-500">Only members with this tier will be able to book classes here.</p>
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={saveRoomMutation.isPending}>
+                        <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none" disabled={saveRoomMutation.isPending}>
                             {saveRoomMutation.isPending ? "Saving..." : "Save Facility"}
                         </Button>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Create Coach Modal */}
             <Dialog open={isCoachModalOpen} onOpenChange={setIsCoachModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100">
                     <DialogHeader>
-                        <DialogTitle>Add Employee</DialogTitle>
-                        <DialogDescription>Register a new trainer. They will use this email and password to log in.</DialogDescription>
+                        <DialogTitle className="text-white">Add Employee</DialogTitle>
+                        <DialogDescription className="text-zinc-400">Register a new trainer. They will use this email and password to log in.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleCreateCoach} className="space-y-4 mt-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="firstName">First Name</Label>
-                                <Input id="firstName" value={coachFirstName} onChange={(e) => setCoachFirstName(e.target.value)} required />
+                                <Label htmlFor="firstName" className="text-zinc-300">First Name</Label>
+                                <Input id="firstName" value={coachFirstName} onChange={(e) => setCoachFirstName(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="lastName">Last Name</Label>
-                                <Input id="lastName" value={coachLastName} onChange={(e) => setCoachLastName(e.target.value)} required />
+                                <Label htmlFor="lastName" className="text-zinc-300">Last Name</Label>
+                                <Input id="lastName" value={coachLastName} onChange={(e) => setCoachLastName(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email Address</Label>
-                            <Input id="email" type="email" value={coachEmail} onChange={(e) => setCoachEmail(e.target.value)} required />
+                            <Label htmlFor="email" className="text-zinc-300">Email Address</Label>
+                            <Input id="email" type="email" value={coachEmail} onChange={(e) => setCoachEmail(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Temporary Password</Label>
-                            <Input id="password" type="password" value={coachPassword} onChange={(e) => setCoachPassword(e.target.value)} required />
+                            <Label htmlFor="password" className="text-zinc-300">Temporary Password</Label>
+                            <Input id="password" type="password" value={coachPassword} onChange={(e) => setCoachPassword(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={createCoachMutation.isPending}>
+                        <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2" disabled={createCoachMutation.isPending}>
                             {createCoachMutation.isPending ? "Creating..." : "Create Trainer Profile"}
                         </Button>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Unified Edit User Modal (Coaches & Members) */}
             <Dialog open={isEditUserModalOpen} onOpenChange={setIsEditUserModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100">
                     <DialogHeader>
-                        <DialogTitle>Edit User Profile & Credentials</DialogTitle>
-                        <DialogDescription>Update profile details. Fill out the password field only if you want to force a password reset.</DialogDescription>
+                        <DialogTitle className="text-white">Edit User Profile</DialogTitle>
+                        <DialogDescription className="text-zinc-400">Update profile details. Fill out the password field only if you want to force a reset.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={(e) => { e.preventDefault(); updateUserMutation.mutate(); }} className="space-y-4 mt-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>First Name</Label>
-                                <Input value={editFirstName} onChange={e => setEditFirstName(e.target.value)} required />
+                                <Label className="text-zinc-300">First Name</Label>
+                                <Input value={editFirstName} onChange={e => setEditFirstName(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                             </div>
                             <div className="space-y-2">
-                                <Label>Last Name</Label>
-                                <Input value={editLastName} onChange={e => setEditLastName(e.target.value)} required />
+                                <Label className="text-zinc-300">Last Name</Label>
+                                <Input value={editLastName} onChange={e => setEditLastName(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Email Address</Label>
-                            <Input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} required />
+                            <Label className="text-zinc-300">Email Address</Label>
+                            <Input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
                         </div>
 
-                        <div className="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                            <Label className="text-slate-700 font-semibold">Force Password Reset (Optional)</Label>
+                        <div className="space-y-2 bg-zinc-900/50 p-4 rounded-xl border border-white/5">
+                            <Label className="text-zinc-300 font-semibold">Force Password Reset (Optional)</Label>
                             <Input
                                 type="text"
-                                placeholder="Enter new password to overwrite..."
+                                placeholder="Enter new password..."
                                 value={editPassword}
                                 onChange={e => setEditPassword(e.target.value)}
-                                className="bg-white mt-1"
+                                className="bg-zinc-950 border-white/10 text-white placeholder:text-zinc-600 mt-2 focus-visible:ring-orange-500"
                             />
-                            <p className="text-[11px] text-slate-500 mt-1">Leave blank to keep the user's current password unchanged.</p>
+                            <p className="text-[10px] text-zinc-500 mt-2 leading-tight">Leave blank to keep the user's current password unchanged.</p>
                         </div>
 
-                        <Button type="submit" className="w-full mt-2" disabled={updateUserMutation.isPending}>
+                        <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2" disabled={updateUserMutation.isPending}>
                             {updateUserMutation.isPending ? "Saving..." : "Save Profile Changes"}
                         </Button>
                     </form>
                 </DialogContent>
             </Dialog>
 
-            {/* Class Creator Modal */}
             <Dialog open={isClassModalOpen} onOpenChange={setIsClassModalOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] bg-zinc-950 border border-white/10 text-zinc-100">
                     <DialogHeader>
-                        <DialogTitle>Schedule Group Class</DialogTitle>
-                        <DialogDescription>Assign a coach, pick a room, and set capacity limits.</DialogDescription>
+                        <DialogTitle className="text-white">Schedule Group Class</DialogTitle>
+                        <DialogDescription className="text-zinc-400">Assign a coach, pick a room, and set capacity limits.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={(e) => { e.preventDefault(); createClassMutation.mutate(); }} className="space-y-4 mt-4">
                         <div className="space-y-2">
-                            <Label>Class Title</Label>
-                            <Input value={className} onChange={e => setClassName(e.target.value)} required placeholder="e.g. HIIT Extreme" />
+                            <Label className="text-zinc-300">Class Title</Label>
+                            <Input value={className} onChange={e => setClassName(e.target.value)} required placeholder="e.g. HIIT Extreme" className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2 flex flex-col">
-                                <Label>Assign Coach</Label>
-                                <select required value={classCoachId} onChange={e => setClassCoachId(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                                <Label className="text-zinc-300">Assign Coach</Label>
+                                <select required value={classCoachId} onChange={e => setClassCoachId(e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
                                     <option value="" disabled>Select Coach</option>
                                     {systemCoaches?.filter(c => c.isActive).map(c => (
                                         <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
@@ -833,8 +847,8 @@ export default function AdminDashboard() {
                                 </select>
                             </div>
                             <div className="space-y-2 flex flex-col">
-                                <Label>Facility Room</Label>
-                                <select required value={classRoomId} onChange={e => setClassRoomId(e.target.value)} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm">
+                                <Label className="text-zinc-300">Facility Room</Label>
+                                <select required value={classRoomId} onChange={e => setClassRoomId(e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
                                     <option value="" disabled>Select Room</option>
                                     {rooms?.map(r => (
                                         <option key={r.id} value={r.id}>{r.name} (Max: {r.maxCapacity})</option>
@@ -845,21 +859,21 @@ export default function AdminDashboard() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Start Time</Label>
-                                <Input type="datetime-local" value={classStartTime} onChange={e => setClassStartTime(e.target.value)} required />
+                                <Label className="text-zinc-300">Start Time</Label>
+                                <Input type="datetime-local" value={classStartTime} onChange={e => setClassStartTime(e.target.value)} required className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500" />
                             </div>
                             <div className="space-y-2">
-                                <Label>End Time</Label>
-                                <Input type="datetime-local" value={classEndTime} onChange={e => setClassEndTime(e.target.value)} required />
+                                <Label className="text-zinc-300">End Time</Label>
+                                <Input type="datetime-local" value={classEndTime} onChange={e => setClassEndTime(e.target.value)} required className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Max Attendees Limit</Label>
-                            <Input type="number" min="1" value={classMaxAttendees} onChange={e => setClassMaxAttendees(e.target.value)} required placeholder="e.g. 15" />
+                            <Label className="text-zinc-300">Max Attendees Limit</Label>
+                            <Input type="number" min="1" value={classMaxAttendees} onChange={e => setClassMaxAttendees(e.target.value)} required placeholder="e.g. 15" className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
                         </div>
 
-                        <Button type="submit" className="w-full mt-2" disabled={createClassMutation.isPending}>
+                        <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2" disabled={createClassMutation.isPending}>
                             {createClassMutation.isPending ? "Scheduling..." : "Add to Calendar"}
                         </Button>
                     </form>

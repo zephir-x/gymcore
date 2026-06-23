@@ -1,14 +1,15 @@
-﻿import { useState } from "react"
+﻿import * as React from "react"
+import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
+import { LogOut, CalendarPlus, Clock, Users, ShieldAlert, ArrowRight, UserCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,9 +21,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import * as React from "react";
 
-// Represents a group class assigned to the coach
+// INTERFACES
 interface AgendaClass {
     id: string
     name: string
@@ -31,7 +31,6 @@ interface AgendaClass {
     attendeesCount: number
 }
 
-// Represents a 1:1 training slot created by the coach
 interface AgendaSlot {
     id: string
     startTime: string
@@ -39,7 +38,6 @@ interface AgendaSlot {
     status: string
 }
 
-// The unified DTO received from the backend containing both classes and 1:1 slots
 interface CoachAgenda {
     assignedClasses: AgendaClass[]
     trainerSlots: AgendaSlot[]
@@ -48,11 +46,9 @@ interface CoachAgenda {
 export default function TrainerDashboard() {
     const { user, logout } = useAuth()
     const queryClient = useQueryClient()
-
-    // We only need to track the start time, as slots are fixed at 1-hour duration
+    
     const [startTime, setStartTime] = useState("")
-
-    // Fetch the complete agenda (both assigned classes and personal slots) for the logged-in coach
+    
     const { data: agenda, isLoading } = useQuery<CoachAgenda>({
         queryKey: ['coach-agenda'],
         queryFn: async () => {
@@ -60,63 +56,53 @@ export default function TrainerDashboard() {
             return response.data
         }
     })
-
-    // Mutation to add a new 1:1 availability slot
+    
     const addSlotMutation = useMutation({
         mutationFn: async (payload: { startTime: string, endTime: string }) => {
             const response = await api.post('/api/coaches/slots', payload)
             return response.data
         },
         onSuccess: async () => {
-            toast.success("Slot added", { description: "Your availability has been updated." })
+            toast.success("Slot Added", { description: "Your availability has been updated." })
             setStartTime("")
-            // Automatically refresh the agenda data to show the new slot without a page reload
             await queryClient.invalidateQueries({ queryKey: ['coach-agenda'] })
         },
         onError: (error: any) => {
             console.error(error)
-            toast.error("Failed to add slot", {
-                description: "This time slot is already taken or invalid. Please check your agenda."
+            toast.error("Action Failed", {
+                description: "This time slot is already taken or invalid."
             })
         }
     })
 
-    // Handles the form submission to create a new slot
     const handleAddSlot = (e: React.SyntheticEvent) => {
         e.preventDefault()
         if (!startTime) return
 
-        // Convert the input string to a Date object for manipulation
         const startObj = new Date(startTime)
+        const endObj = new Date(startObj.getTime() + 60 * 60 * 1000) // 1 HOUR
 
-        // Calculate the end time by adding exactly 1 hour (in milliseconds)
-        const endObj = new Date(startObj.getTime() + 60 * 60 * 1000)
-
-        // Convert back to ISO string to ensure compatibility with PostgreSQL's strict timestamp requirements
         addSlotMutation.mutate({
             startTime: startObj.toISOString(),
             endTime: endObj.toISOString()
         })
     }
-
-    // Mutation to cancel an existing 1:1 availability slot
+    
     const cancelSlotMutation = useMutation({
         mutationFn: async (slotId: string) => {
             const response = await api.delete(`/api/coaches/slots/${slotId}`)
             return response.data
         },
         onSuccess: async () => {
-            toast.success("Slot Cancelled", { description: "You have cancelled this time slot." })
-            // Refresh the agenda data to reflect the cancellation
+            toast.success("Slot Cancelled", { description: "You have removed this time slot." })
             await queryClient.invalidateQueries({ queryKey: ['coach-agenda'] })
         },
         onError: (error: any) => {
             console.error(error)
-            toast.error("Failed to cancel slot", { description: "Could not cancel this slot." })
+            toast.error("Action Failed", { description: "Could not cancel this slot." })
         }
     })
-
-    // Utility function for consistent date formatting across the dashboard
+    
     const formatDateTime = (dateString: string) => {
         return new Date(dateString).toLocaleString([], {
             weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -124,120 +110,197 @@ export default function TrainerDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 md:p-12">
-            <div className="max-w-5xl mx-auto space-y-8">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900">Trainer Portal</h1>
-                        <p className="text-slate-600 mt-1">Welcome to your workspace, {user?.firstName}!</p>
+        <div className="min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans p-4 md:p-12 overflow-y-auto overflow-x-hidden select-none relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* AMBIENT GLOW EFFECTS */}
+            <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
+                {/* HEADER */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0 gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-zinc-900/80 rounded-xl border border-white/5">
+                            <ShieldAlert className="text-orange-500" size={24} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Trainer Portal</h1>
+                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Welcome to your workspace, <span className="text-orange-400">{user?.firstName}</span>!</p>
+                        </div>
                     </div>
-                    <Button variant="outline" onClick={logout}>Log out</Button>
+                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
+                        <LogOut size={18} className="mr-2" /> Log out
+                    </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Create Slot Form */}
-                    <Card className="md:col-span-1 shadow-sm h-fit">
-                        <CardHeader>
-                            <CardTitle>Add Availability</CardTitle>
-                            <CardDescription>Open a slot for 1:1 training</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleAddSlot} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="start">Start Time (1-hour slot)</Label>
-                                    <Input
-                                        id="start"
-                                        type="datetime-local"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                        required
-                                    />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* LEFT COLUMN: PROFILE */}
+                    <div className="lg:col-span-1 space-y-8 animate-in slide-in-from-left-4 duration-500">
+                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
+                            <CardContent className="p-6 flex flex-col items-center text-center">
+                                <div className="w-24 h-24 rounded-full bg-zinc-950 border-2 border-orange-500/50 mb-4 flex items-center justify-center relative shadow-[0_0_20px_rgba(249,115,22,0.1)] group-hover:border-orange-500 transition-colors">
+                                    <UserCircle size={48} className="text-zinc-600" />
                                 </div>
-                                <Button type="submit" className="w-full" disabled={addSlotMutation.isPending}>
-                                    {addSlotMutation.isPending ? "Adding..." : "Add 1-Hour Slot"}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                                <h3 className="text-xl font-bold text-white mb-1">{user?.firstName} {user?.lastName}</h3>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-orange-500 mb-4">Expert Trainer</p>
 
-                    {/* Agenda Lists */}
-                    <div className="md:col-span-2 space-y-6">
-                        {/* Group Classes (Read Only) */}
-                        <Card className="shadow-sm border-blue-100">
-                            <CardHeader className="bg-blue-50/50 pb-4">
-                                <CardTitle className="text-blue-900">Assigned Group Classes</CardTitle>
-                                <CardDescription>Classes you are leading</CardDescription>
-                            </CardHeader>
-                            <CardContent className="pt-4">
-                                {isLoading ? <p>Loading agenda...</p> : agenda?.assignedClasses.length ? (
-                                    <ul className="space-y-3">
-                                        {agenda.assignedClasses.map(cls => (
-                                            <li key={cls.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
-                                                <div>
-                                                    <p className="font-bold">{cls.name}</p>
-                                                    <p className="text-sm text-slate-500">{formatDateTime(cls.startTime)} - {formatDateTime(cls.endTime)}</p>
-                                                </div>
-                                                <Badge variant="secondary">{cls.attendeesCount} enrolled</Badge>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : <p className="text-slate-500 text-sm">No upcoming classes assigned.</p>}
+                                <div className="w-full h-10 bg-zinc-950/50 border border-white/5 rounded-lg flex items-center justify-center text-zinc-500 text-xs font-medium border-dashed cursor-not-allowed">
+                                    PLACEHOLDER: Profile Settings
+                                </div>
                             </CardContent>
                         </Card>
 
-                        {/* 1:1 Trainer Slots */}
-                        <Card className="shadow-sm">
-                            <CardHeader>
-                                <CardTitle>My 1:1 Slots</CardTitle>
-                                <CardDescription>Your personal training schedule</CardDescription>
+                        {/* CREATE SLOT FORM */}
+                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl">
+                            <CardHeader className="pb-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <CalendarPlus size={18} className="text-orange-500" />
+                                    <CardTitle className="text-white text-lg">Add Availability</CardTitle>
+                                </div>
+                                <CardDescription className="text-zinc-400 text-xs">Open a new 1-hour slot for personal training</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {isLoading ? <p>Loading slots...</p> : agenda?.trainerSlots.length ? (
-                                    <ul className="space-y-3">
-                                        {agenda.trainerSlots.map(slot => (
-                                            <li key={slot.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
-                                                <div>
-                                                    <p className="font-semibold text-slate-700">1:1 Session</p>
-                                                    <p className="text-sm text-slate-500">{formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime)}</p>
-                                                </div>
+                                <form onSubmit={handleAddSlot} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="start" className="text-zinc-300">Start Time</Label>
+                                        <Input
+                                            id="start"
+                                            type="datetime-local"
+                                            value={startTime}
+                                            onChange={(e) => setStartTime(e.target.value)}
+                                            required
+                                            className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2"
+                                        disabled={addSlotMutation.isPending}
+                                    >
+                                        {addSlotMutation.isPending ? "Adding..." : "Add 1-Hour Slot"}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                                                <div className="flex items-center gap-3">
-                                                    <Badge variant={slot.status === "Available" ? "outline" : "default"} className={slot.status === "Available" ? "text-green-600 border-green-200" : ""}>
-                                                        {slot.status}
-                                                    </Badge>
-
-                                                    {/* Cancel button for Trainer (Only shown if the slot is still active) */}
-                                                    {slot.status !== "Cancelled" && slot.status !== "Completed" && (
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">Cancel</Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Cancel Work Slot</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        Are you sure you want to cancel this availability? If a client has already booked it, their reservation will also be cancelled.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Keep it</AlertDialogCancel>
-                                                                    <AlertDialogAction
-                                                                        onClick={() => cancelSlotMutation.mutate(slot.id)}
-                                                                        className="bg-destructive"
-                                                                        disabled={cancelSlotMutation.isPending}
-                                                                    >
-                                                                        {cancelSlotMutation.isPending ? "Cancelling..." : "Yes, cancel slot"}
-                                                                    </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    )}
+                    {/* RIGHT COLUMN: AGENDA */}
+                    <div className="lg:col-span-2 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+                        {/* GROUP CLASSES */}
+                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col">
+                            <CardHeader className="bg-zinc-900/50 pb-5 border-b border-white/5">
+                                <CardTitle className="text-white text-xl flex items-center gap-2">
+                                    <Users size={20} className="text-blue-400" /> Assigned Group Classes
+                                </CardTitle>
+                                <CardDescription className="text-zinc-400">Classes you are leading</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0 flex-1 min-h-[200px] overflow-hidden relative">
+                                <div className="absolute inset-0 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    {isLoading ? (
+                                        <div className="space-y-3 animate-pulse">
+                                            {[1, 2].map(i => <div key={i} className="h-20 bg-zinc-800/50 rounded-xl" />)}
+                                        </div>
+                                    ) : agenda?.assignedClasses.length ? (
+                                        <div className="space-y-3">
+                                            {agenda.assignedClasses.map(cls => (
+                                                <div key={cls.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-zinc-950/50 border border-white/5 rounded-xl hover:border-blue-500/30 transition-colors gap-4">
+                                                    <div>
+                                                        <p className="font-bold text-white text-base">{cls.name}</p>
+                                                        <div className="flex items-center text-xs text-zinc-500 mt-1 font-medium bg-zinc-900 px-2 py-1 rounded w-fit">
+                                                            <Clock size={12} className="mr-1.5 text-blue-400" />
+                                                            {formatDateTime(cls.startTime)} <ArrowRight size={10} className="mx-1" /> {formatDateTime(cls.endTime).split(', ')[1]}
+                                                        </div>
+                                                    </div>
+                                                    <div className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
+                                                        {cls.attendeesCount} Enrolled
+                                                    </div>
                                                 </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : <p className="text-slate-500 text-sm">You haven't opened any slots yet.</p>}
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center">
+                                            <p className="text-zinc-500 font-medium">No upcoming classes assigned.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* TRAINER SLOTS */}
+                        <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl flex flex-col">
+                            <CardHeader className="bg-zinc-900/50 pb-5 border-b border-white/5">
+                                <CardTitle className="text-white text-xl flex items-center gap-2">
+                                    <Clock size={20} className="text-orange-500" /> My 1:1 Slots
+                                </CardTitle>
+                                <CardDescription className="text-zinc-400">Your personal training schedule</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0 flex-1 min-h-[300px] overflow-hidden relative">
+                                <div className="absolute inset-0 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                    {isLoading ? (
+                                        <div className="space-y-3 animate-pulse">
+                                            {[1, 2, 3].map(i => <div key={i} className="h-16 bg-zinc-800/50 rounded-xl" />)}
+                                        </div>
+                                    ) : agenda?.trainerSlots.length ? (
+                                        <div className="space-y-3">
+                                            {agenda.trainerSlots.map(slot => {
+                                                const isAvailable = slot.status === "Available";
+                                                const isBooked = slot.status === "Booked";
+
+                                                return (
+                                                    <div key={slot.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-zinc-950/50 border border-white/5 rounded-xl hover:border-orange-500/30 transition-colors gap-4">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="w-2 h-2 rounded-full bg-orange-500" />
+                                                                <p className="font-bold text-white text-sm">1:1 Session</p>
+                                                            </div>
+                                                            <p className="text-xs text-zinc-500 font-medium ml-4">{formatDateTime(slot.startTime)} - {formatDateTime(slot.endTime).split(', ')[1]}</p>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-3 shrink-0 ml-4 sm:ml-0">
+                                                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                                                                isAvailable ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                                                                    isBooked ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                                                        "bg-zinc-800 text-zinc-400 border-white/5"
+                                                            }`}>
+                                                                {slot.status}
+                                                            </span>
+                                                            
+                                                            {slot.status !== "Cancelled" && slot.status !== "Completed" && (
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 text-xs">Cancel</Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Cancel Work Slot</AlertDialogTitle>
+                                                                            <AlertDialogDescription className="text-zinc-400">
+                                                                                Are you sure you want to cancel this availability? If a client has already booked it, their reservation will also be cancelled.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
+                                                                            <AlertDialogAction
+                                                                                onClick={() => cancelSlotMutation.mutate(slot.id)}
+                                                                                className="bg-red-600 hover:bg-red-700 text-white border-none"
+                                                                                disabled={cancelSlotMutation.isPending}
+                                                                            >
+                                                                                {cancelSlotMutation.isPending ? "Cancelling..." : "Yes, cancel slot"}
+                                                                            </AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center">
+                                            <p className="text-zinc-500 font-medium">You haven't opened any slots yet.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
