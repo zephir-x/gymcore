@@ -13,13 +13,12 @@ namespace GymCore.Infrastructure.Data.Configurations
 
             builder.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
             builder.Property(x => x.LastName).IsRequired().HasMaxLength(100);
-            builder.Property(x => x.PhoneNumber).HasMaxLength(20);
             builder.Property(x => x.AvatarUrl).HasMaxLength(500);
+            builder.Property(x => x.Bio).HasMaxLength(1000);
 
             // Set the column type for decimal values (e.g. 999.99)
             builder.Property(x => x.Weight).HasColumnType("decimal(5,2)");
             builder.Property(x => x.Height).HasColumnType("decimal(5,2)");
-            builder.Property(x => x.BodyFatPercentage).HasColumnType("decimal(5,2)");
         }
     }
 }

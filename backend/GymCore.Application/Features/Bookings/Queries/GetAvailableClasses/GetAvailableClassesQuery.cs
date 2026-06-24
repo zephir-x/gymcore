@@ -5,35 +5,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Bookings.Queries.GetAvailableClasses
 {
-    // Clean, lightweight object sent to Frontend
-    public record GroupClassDto(
-        Guid Id,
-        string Name,
-        DateTime StartTime,
-        DateTime EndTime,
-        int MaxAttendees,
-        int CurrentBookings
-    );
+    public record GroupClassDto(Guid Id, string Name, DateTime StartTime, DateTime EndTime, int MaxAttendees, int CurrentBookings, string? ImageUrl);
     
-    // Query does not accept parameters (we may add date filters in the future)
     public record GetAvailableClassesQuery() : IRequest<List<GroupClassDto>>;
 
-    public class GetAvailableClassesQueryHandler(IApplicationDbContext context)
-        : IRequestHandler<GetAvailableClassesQuery, List<GroupClassDto>>
+    public class GetAvailableClassesQueryHandler(IApplicationDbContext context) : IRequestHandler<GetAvailableClassesQuery, List<GroupClassDto>>
     {
         public async Task<List<GroupClassDto>> Handle(GetAvailableClassesQuery request, CancellationToken cancellationToken)
         {
             return await context.GroupClasses
-                .AsNoTracking() // We don't track changes on read
-                .Where(c => c.StartTime >= DateTime.UtcNow && !c.IsCancelled) // We only draw future classes
+                .AsNoTracking()
+                .Where(c => c.StartTime >= DateTime.UtcNow && !c.IsCancelled)
                 .OrderBy(c => c.StartTime)
                 .Select(c => new GroupClassDto(
-                    c.Id,
-                    c.Name,
-                    c.StartTime,
-                    c.EndTime,
-                    c.MaxAttendees,
-                    c.Reservations.Count(r => r.Status == ReservationStatus.Confirmed)
+                    c.Id, c.Name, c.StartTime, c.EndTime, c.MaxAttendees,
+                    c.Reservations.Count(r => r.Status == ReservationStatus.Confirmed),
+                    c.ImageUrl
                 ))
                 .ToListAsync(cancellationToken);
         }

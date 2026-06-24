@@ -1,23 +1,27 @@
 ﻿import * as React from "react"
+import { useState } from "react"
 import { Link, Navigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation } from "lucide-react"
+import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation, ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 
-interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number }
+interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null }
 interface Reservation { reservationId: string; targetId: string | null; title: string; trainerName: string; startTime: string; endTime: string; status: string; type: string; }
 interface Subscription { subscriptionId: string; tierName: string; startDate: string; endDate: string; status: string; }
-interface Coach { id: string; firstName: string; lastName: string }
-interface Room { id: string; name: string; maxCapacity: number; requiredTierId: string | null; requiredTierName: string | null; }
+interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null }
+interface Room { id: string; name: string; maxCapacity: number; requiredTierId: string | null; requiredTierName: string | null; imageUrl?: string | null; description?: string | null }
 
 export default function Home() {
     const { user, logout } = useAuth()
     const queryClient = useQueryClient()
+
+    const [selectedRoomDetails, setSelectedRoomDetails] = useState<Room | null>(null);
 
     /* QUERIES */
     const { data: classes, isLoading: isClassesLoading } = useQuery<GroupClass[]>({
@@ -47,7 +51,12 @@ export default function Home() {
             return res.data;
         }
     })
-    
+
+    const { data: myProfile } = useQuery({
+        queryKey: ['my-profile'],
+        queryFn: async () => { const res = await api.get('/api/users/me/profile'); return res.data }
+    })
+
     /* MUTATIONS */
     const bookMutation = useMutation({
         mutationFn: async (classId: string) => { const res = await api.post(`/api/bookings/classes/${classId}`); return res.data },
@@ -63,7 +72,7 @@ export default function Home() {
             toast.error("Booking Failed", { description: "Could not book this class. Make sure you have an active subscription." })
         }
     })
-    
+
     const cancelReservationMutation = useMutation({
         mutationFn: async (reservationId: string) => {
             const res = await api.delete(`/api/bookings/reservations/${reservationId}`)
@@ -87,14 +96,13 @@ export default function Home() {
     const handleLogout = (e: React.MouseEvent) => { e.preventDefault(); logout() }
 
     const displayName = user?.firstName || "Stranger"
-    const displayLastName = (user as any)?.lastName || ""
 
     const formatTime = (dateString: string) => new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
     const formatSubDate = (dateString: string) => new Date(dateString).toLocaleDateString([], { month: 'short', year: 'numeric' })
-    
+
     const nowTime = new Date().getTime()
-    
+
     const pastWorkoutsCount = reservations?.filter(r =>
         new Date(r.endTime).getTime() < nowTime && r.status !== "Class Cancelled by Gym"
     ).length || 0
@@ -102,10 +110,10 @@ export default function Home() {
     const upcomingBookings = reservations?.filter(r =>
         new Date(r.endTime).getTime() >= nowTime
     ) || []
-    
+
     const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
         (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
-    
+
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
             {/* LEFT COLUMN: PROFILE & NAV */}
@@ -119,21 +127,23 @@ export default function Home() {
 
                 {/* PROFILE CARD */}
                 <Link to="/dashboard" className="flex flex-col items-center justify-center text-center gap-2 mb-6 p-4 rounded-2xl border border-transparent hover:border-white/5 hover:bg-zinc-900/40 transition-all duration-300 group shrink-0 w-full">
-                    <Avatar className="h-16 w-16 border-2 border-orange-500 group-hover:scale-105 transition-transform duration-300 shadow-[0_0_15px_rgba(249,115,22,0.2)]">
-                        <AvatarImage src="" />
-                        <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold text-2xl">
-                            {displayName.charAt(0)}
-                        </AvatarFallback>
+                    <Avatar className="h-16 w-16 border-2 border-orange-500 group-hover:scale-105 transition-transform duration-300 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+                        {myProfile?.avatarUrl ? (
+                            <AvatarImage src={myProfile.avatarUrl} className="object-cover" />
+                        ) : (
+                            <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold text-2xl">
+                                {displayName.charAt(0)}
+                            </AvatarFallback>
+                        )}
                     </Avatar>
 
                     <div className="flex flex-col items-center min-w-0 mt-1">
                         <h2 className="text-lg font-bold text-white leading-tight group-hover:text-orange-500 transition-colors">
                             <span className="block">{displayName}</span>
-                            <span className="block">{displayLastName}</span>
                         </h2>
 
                         <p className="text-xs text-zinc-400 font-medium mt-1 mb-2">{user?.role}</p>
-                        
+
                         {/* DYNAMIC MEMBERSHIP BADGE */}
                         <div className="px-3 py-1 bg-zinc-950 border border-dashed border-zinc-800 rounded-md text-[10px] text-zinc-500 whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-1.5">
                             <Award size={12} className={subscription ? "text-orange-500" : "text-zinc-600"} />
@@ -188,10 +198,10 @@ export default function Home() {
                 <div className="space-y-12 pb-12">
                     {/* MODULE: EXPLORE ROOMS */}
                     <section>
-                        <div className="flex justify-between items-end mb-4">
-                            <h3 className="text-xl font-bold text-white">Explore Rooms</h3>
-                            <Link to="/rooms" className="text-sm font-semibold text-orange-500 hover:text-orange-400 transition-colors flex items-center">
-                                All rooms <ChevronRight size={16} className="ml-1" />
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-white">Explore Facilities</h3>
+                            <Link to="/rooms">
+                                <Button variant="link" className="text-orange-500 hover:text-orange-400 p-0">Virtual Tour <ArrowRight size={16} className="ml-1" /></Button>
                             </Link>
                         </div>
 
@@ -205,8 +215,21 @@ export default function Home() {
                                     <>
                                         {/* LIMIT TO MAX 5 ROOMS */}
                                         {rooms.slice(0, 5).map((room) => (
-                                            <div key={room.id} className="w-[240px] h-[140px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group cursor-pointer">
-                                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
+                                            <div
+                                                key={room.id}
+                                                onClick={() => setSelectedRoomDetails(room)}
+                                                className="w-[240px] h-[140px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group cursor-pointer"
+                                            >
+
+                                                {/* DYNAMIC BACKGROUND IMAGE */}
+                                                {room.imageUrl ? (
+                                                    <>
+                                                        <img src={room.imageUrl} alt={room.name} className="absolute inset-0 w-full h-full object-cover grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-60 transition-all duration-700 mix-blend-luminosity group-hover:mix-blend-normal" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent pointer-events-none" />
+                                                    </>
+                                                ) : (
+                                                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />
+                                                )}
 
                                                 <div className="relative z-10">
                                                     <h4 className="text-white font-bold text-lg leading-tight mb-1 truncate">{room.name}</h4>
@@ -268,8 +291,16 @@ export default function Home() {
                                             const isBooked = reservations?.some(r => r.targetId === cls.id && r.type === "Group")
 
                                             return (
-                                                <div key={cls.id} className={`w-[300px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden ${isFull ? "opacity-80" : ""}`}>
-                                                    <div className="flex justify-between items-start mb-4">
+                                                <div key={cls.id} className={`w-[300px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group ${isFull ? "opacity-80" : ""}`}>
+                                                    {/* DYNAMIC BACKGROUND IMAGE FOR CLASSES */}
+                                                    {cls.imageUrl && (
+                                                        <>
+                                                            <img src={cls.imageUrl} alt={cls.name} className="absolute inset-0 w-full h-full object-cover grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-40 transition-all duration-700 mix-blend-luminosity group-hover:mix-blend-normal" />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pointer-events-none" />
+                                                        </>
+                                                    )}
+
+                                                    <div className="relative z-10 flex justify-between items-start mb-4">
                                                         <div>
                                                             <h4 className="text-white font-bold text-lg leading-tight truncate max-w-[130px]">{cls.name}</h4>
                                                             <p className="text-orange-500 text-sm font-medium mt-0.5">{formatDate(cls.startTime)}</p>
@@ -285,21 +316,23 @@ export default function Home() {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <Button
-                                                        className={`w-full font-bold h-10 border-none transition-all duration-300 shadow-md ${
-                                                            !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                                    isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                        "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
-                                                        }`}
-                                                        onClick={() => bookMutation.mutate(cls.id)}
-                                                        disabled={!subscription || isFull || isBooked || bookMutation.isPending}
-                                                    >
-                                                        {bookMutation.isPending ? "Processing..." :
-                                                            !subscription ? "Requires Plan" :
-                                                                isBooked ? <><CheckCircle2 size={16} /> Booked</> :
-                                                                    isFull ? "Waitlist (Soon)" : "Book Spot"}
-                                                    </Button>
+                                                    <div className="relative z-10">
+                                                        <Button
+                                                            className={`w-full font-bold h-10 border-none transition-all duration-300 shadow-md ${
+                                                                !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                    isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                                        isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                            "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                            }`}
+                                                            onClick={() => bookMutation.mutate(cls.id)}
+                                                            disabled={!subscription || isFull || isBooked || bookMutation.isPending}
+                                                        >
+                                                            {bookMutation.isPending ? "Processing..." :
+                                                                !subscription ? "Requires Plan" :
+                                                                    isBooked ? <><CheckCircle2 size={16} /> Booked</> :
+                                                                        isFull ? "Waitlist (Soon)" : "Book Spot"}
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )
                                         })}
@@ -317,7 +350,7 @@ export default function Home() {
                                     </div>
                                 )}
                             </div>
-                            <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-zinc-950 to-transparent pointer-events-none" />
+                            <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-zinc-950 to-transparent pointer-events-none z-10" />
                         </div>
                     </section>
 
@@ -339,11 +372,13 @@ export default function Home() {
                                         {coaches.slice(0, 5).map((coach) => (
                                             <div key={coach.id} className="w-[280px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between">
                                                 <div className="flex items-center gap-4 mb-4">
-                                                    <Avatar className="h-12 w-12 border border-orange-500 shrink-0">
-                                                        <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold">
-                                                            {coach.firstName[0]}{coach.lastName[0]}
-                                                        </AvatarFallback>
-                                                    </Avatar>
+                                                    <div className="h-12 w-12 rounded-full border border-orange-500 shrink-0 overflow-hidden bg-zinc-800 flex items-center justify-center">
+                                                        {coach.avatarUrl ? (
+                                                            <img src={coach.avatarUrl} alt="Coach" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="text-orange-500 font-bold">{coach.firstName[0]}{coach.lastName[0]}</span>
+                                                        )}
+                                                    </div>
                                                     <div>
                                                         <h4 className="text-white font-bold text-lg leading-tight">
                                                             <span className="block">{coach.firstName}</span>
@@ -391,7 +426,7 @@ export default function Home() {
                             {upcomingBookings.length}
                         </span>
                     </div>
-                    
+
                     <div className="relative flex-1 min-h-0">
                         <div className="h-full overflow-y-auto pr-1 pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                             {upcomingBookings.length > 0 ? (
@@ -453,7 +488,7 @@ export default function Home() {
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none" />
                     </div>
                 </div>
@@ -500,6 +535,34 @@ export default function Home() {
                     <p className="text-sm text-zinc-500 font-medium">PLACEHOLDER:<br/>AI Assistant Widget</p>
                 </div>
             </aside>
+
+            {/* ROOM DETAILS MODAL */}
+            <Dialog open={!!selectedRoomDetails} onOpenChange={() => setSelectedRoomDetails(null)}>
+                <DialogContent className="sm:max-w-[450px] p-0 bg-zinc-950 border border-white/10 overflow-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="w-full h-[250px] relative">
+                        {selectedRoomDetails?.imageUrl ? (
+                            <img src={selectedRoomDetails.imageUrl} alt={selectedRoomDetails.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                                <span className="text-zinc-600">No Image</span>
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none" />
+                    </div>
+                    <div className="px-6 pb-6 pt-2">
+                        <h2 className="text-2xl font-black text-white mb-2">{selectedRoomDetails?.name}</h2>
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="flex items-center text-zinc-400 text-xs font-medium bg-zinc-900 px-2 py-1 rounded-md border border-white/5"><Users size={14} className="mr-1.5 text-orange-500"/> Capacity: {selectedRoomDetails?.maxCapacity}</span>
+                            <span className="flex items-center text-zinc-400 text-xs font-medium bg-zinc-900 px-2 py-1 rounded-md border border-white/5"><Award size={14} className="mr-1.5 text-amber-500"/> {selectedRoomDetails?.requiredTierName || "All Access"}</span>
+                        </div>
+                        <p className="text-sm text-zinc-400 leading-relaxed">
+                            {selectedRoomDetails?.description || "Experience top-tier fitness in our expertly designed facility, crafted to help you push your limits and achieve your goals."}
+                        </p>
+                        <Button className="w-full mt-6 bg-zinc-900 hover:bg-zinc-800 text-white border border-white/5" onClick={() => setSelectedRoomDetails(null)}>Close View</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
         </div>
     )
 }

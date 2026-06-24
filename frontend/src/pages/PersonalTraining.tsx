@@ -6,10 +6,10 @@ import { toast } from "sonner"
 import { ArrowLeft, Clock, Calendar as CalendarIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 /* INTERFACES */
-interface Coach { id: string; firstName: string; lastName: string }
+interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null }
 interface TrainerSlot { id: string; startTime: string; endTime: string }
 interface Subscription { subscriptionId: string; tierName: string; }
 
@@ -35,7 +35,7 @@ export default function PersonalTraining() {
         queryFn: async () => { const res = await api.get(`/api/bookings/coaches/${selectedCoachId}/slots`); return res.data },
         enabled: !!selectedCoachId
     })
-    
+
     const { data: subscription } = useQuery<Subscription | null>({
         queryKey: ['my-subscription'],
         queryFn: async () => {
@@ -120,9 +120,13 @@ export default function PersonalTraining() {
                                         }`}
                                     >
                                         <Avatar className={`h-12 w-12 border ${isSelected ? 'border-orange-500' : 'border-zinc-700'}`}>
-                                            <AvatarFallback className={`font-bold ${isSelected ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
-                                                {coach.firstName[0]}{coach.lastName[0]}
-                                            </AvatarFallback>
+                                            {coach.avatarUrl ? (
+                                                <AvatarImage src={coach.avatarUrl} className="object-cover" />
+                                            ) : (
+                                                <AvatarFallback className={`font-bold ${isSelected ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                    {coach.firstName[0]}{coach.lastName[0]}
+                                                </AvatarFallback>
+                                            )}
                                         </Avatar>
                                         <div className="min-w-0 text-left">
                                             <h4 className={`font-bold leading-tight ${isSelected ? 'text-white' : 'text-zinc-300'}`}>

@@ -9,13 +9,11 @@ namespace GymCore.Domain.Entities
         public string FirstName { get; private set; }
         public string LastName { get; private set; }
         
-        // Nullable properties - user doesn't have to provide these right away
-        public string? PhoneNumber { get; private set; }
         public string? AvatarUrl { get; private set; }
+        public string? Bio { get; private set; }
         
         public decimal? Weight { get; private set; }
         public decimal? Height { get; private set; }
-        public decimal? BodyFatPercentage { get; private set; }
         
         public User User { get; private set; }
 
@@ -28,20 +26,19 @@ namespace GymCore.Domain.Entities
             LastName = lastName;
         }
         
-        public void UpdateProfile(string firstName, string lastName, string? phone, string? avatar)
+        public void UpdateProfile(string firstName, string lastName, string? avatar, string? bio)
         {
             FirstName = firstName;
             LastName = lastName;
-            PhoneNumber = phone;
             AvatarUrl = avatar;
+            Bio = bio;
             Update(); 
         }
         
-        public void UpdateMetrics(decimal? weight, decimal? height, decimal? bodyFat)
+        public void UpdateMetrics(decimal? weight, decimal? height)
         {
             Weight = weight;
             Height = height;
-            BodyFatPercentage = bodyFat;
             Update();
         }
     }

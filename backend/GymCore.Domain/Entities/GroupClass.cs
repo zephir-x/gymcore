@@ -13,8 +13,10 @@ namespace GymCore.Domain.Entities
         public DateTime StartTime { get; private set; }
         public DateTime EndTime { get; private set; }
         
+        // Graphic for the class - can be null
+        public string? ImageUrl { get; private set; }
+        
         // Hard limit on how many people can attend
-        // Important: Business logic must ensure this doesn't exceed the Room's MaxCapacity
         public int MaxAttendees { get; private set; }
         
         // Flag that tells if the classes are cancelled by admin or not
@@ -32,13 +34,14 @@ namespace GymCore.Domain.Entities
         
         protected GroupClass() { }
 
-        public GroupClass(string name, Guid coachId, Guid roomId, DateTime startTime, DateTime endTime, int maxAttendees)
+        public GroupClass(string name, Guid coachId, Guid roomId, DateTime startTime, DateTime endTime, int maxAttendees, string? imageUrl = null)
         {
             Name = name;
             CoachId = coachId;
             RoomId = roomId;
             StartTime = startTime;
             EndTime = endTime;
+            ImageUrl = imageUrl;
             MaxAttendees = maxAttendees;
         }
 
@@ -49,10 +52,11 @@ namespace GymCore.Domain.Entities
             Update(); // Updates the UpdatedAt timestamp from the base Entity class
         }
         
-        public void UpdateDetails(string name, Guid roomId, int maxAttendees)
+        public void UpdateDetails(string name, Guid roomId, string? imageUrl, int maxAttendees)
         {
             Name = name;
             RoomId = roomId;
+            ImageUrl = imageUrl;
             MaxAttendees = maxAttendees;
             Update();
         }

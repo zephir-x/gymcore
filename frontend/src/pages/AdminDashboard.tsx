@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert } from 'lucide-react'
+import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert, ImageIcon } from 'lucide-react'
 
 import {
     Dialog,
@@ -32,6 +32,16 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+// PREDEFINED PREMIUM IMAGES FOR ROOMS AND CLASSES
+const PRESET_FACILITY_IMAGES = [
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1500&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?q=80&w=1470&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1470&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=1470&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1570829460005-c840387bb1ca?q=80&w=1632&auto=format&fit=crop"
+];
+
 // INTERFACES
 interface Room {
     id: string
@@ -39,6 +49,8 @@ interface Room {
     maxCapacity: number
     requiredTierId?: string | null
     requiredTierName?: string | null
+    imageUrl?: string | null
+    description?: string | null
 }
 
 interface SubscriptionTier {
@@ -66,6 +78,7 @@ interface AdminClass {
     maxAttendees: number
     currentBookings: number
     isCancelled: boolean
+    imageUrl?: string | null
 }
 
 interface SubscriptionDistribution {
@@ -90,6 +103,8 @@ export default function AdminDashboard() {
     const [roomName, setRoomName] = React.useState("")
     const [roomCapacity, setRoomCapacity] = React.useState("")
     const [requiredTierId, setRequiredTierId] = React.useState<string>("none")
+    const [roomImageUrl, setRoomImageUrl] = React.useState<string>("")
+    const [roomDescription, setRoomDescription] = React.useState<string>("")
 
     // COACH STATES
     const [isCoachModalOpen, setIsCoachModalOpen] = React.useState(false)
@@ -145,7 +160,7 @@ export default function AdminDashboard() {
         queryKey: ['admin-stats'],
         queryFn: async () => (await api.get('/api/admin/statistics')).data
     })
-    
+
     const pieColors = ['#f97316', '#8b5cf6', '#3b82f6', '#10b981', '#fbbf24', '#ef4444'];
 
     // ROOM MUTATIONS
@@ -154,7 +169,9 @@ export default function AdminDashboard() {
             const payload = {
                 name: roomName,
                 maxCapacity: parseInt(roomCapacity),
-                requiredTierId: requiredTierId === "none" ? null : requiredTierId
+                requiredTierId: requiredTierId === "none" ? null : requiredTierId,
+                imageUrl: roomImageUrl || null,
+                description: roomDescription || null
             }
 
             if (editingRoomId) {
@@ -248,13 +265,17 @@ export default function AdminDashboard() {
     // SCHEDULE MUTATIONS
     const createClassMutation = useMutation({
         mutationFn: async () => {
+            const selectedRoomObj = rooms?.find(r => r.id === classRoomId);
+            const imageToSave = selectedRoomObj?.imageUrl || null;
+
             return await api.post('/api/admin/classes', {
                 name: className,
                 coachId: classCoachId,
                 roomId: classRoomId,
                 startTime: new Date(classStartTime).toISOString(),
                 endTime: new Date(classEndTime).toISOString(),
-                maxAttendees: parseInt(classMaxAttendees)
+                maxAttendees: parseInt(classMaxAttendees),
+                imageUrl: imageToSave
             })
         },
         onSuccess: async () => {
@@ -267,7 +288,6 @@ export default function AdminDashboard() {
             console.error(error)
             toast.error("Error", { description: "Scheduling failed." })
         }
-
     })
 
     const deleteClassMutation = useMutation({
@@ -293,6 +313,8 @@ export default function AdminDashboard() {
         setRoomName(room.name)
         setRoomCapacity(room.maxCapacity ? room.maxCapacity.toString() : "")
         setRequiredTierId(room.requiredTierId || "none")
+        setRoomImageUrl(room.imageUrl || "")
+        setRoomDescription(room.description || "")
         setIsRoomModalOpen(true)
     }
 
@@ -301,6 +323,8 @@ export default function AdminDashboard() {
         setRoomName("")
         setRoomCapacity("")
         setRequiredTierId("none")
+        setRoomImageUrl("")
+        setRoomDescription("")
     }
 
     const handleSaveRoom = (e: React.SyntheticEvent) => {
@@ -366,7 +390,7 @@ export default function AdminDashboard() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
-                                {/* pie chart */}
+                                {/* PIE CHART */}
                                 <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md lg:col-span-2 h-full flex flex-col justify-between shadow-xl outline-none ring-0">
                                     <CardHeader className="p-6 pb-2">
                                         <CardTitle className="text-white">Subscription Distribution</CardTitle>
@@ -574,7 +598,12 @@ export default function AdminDashboard() {
                                         <TableBody>
                                             {rooms.map((room) => (
                                                 <TableRow key={room.id} className="border-b border-white/5 hover:bg-zinc-900/60 transition-colors">
-                                                    <TableCell className="font-semibold text-white">{room.name}</TableCell>
+                                                    <TableCell className="font-semibold text-white flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
+                                                            {room.imageUrl ? <img src={room.imageUrl} alt="room" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
+                                                        </div>
+                                                        {room.name}
+                                                    </TableCell>
                                                     <TableCell>
                                                         <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-zinc-800 text-zinc-300 border border-white/5">{room.maxCapacity} people</span>
                                                     </TableCell>
@@ -647,30 +676,25 @@ export default function AdminDashboard() {
                                             <TableRow className="border-none hover:bg-transparent">
                                                 <TableHead className="font-bold text-zinc-400">Class Name</TableHead>
                                                 <TableHead className="font-bold text-zinc-400">Time</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Coach</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Room</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Attendees</TableHead>
+                                                <TableHead className="font-bold text-zinc-400">Coach & Room</TableHead>
                                                 <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {adminClasses.map((cls) => (
                                                 <TableRow key={cls.id} className={`border-b border-white/5 transition-colors ${cls.isCancelled ? "bg-zinc-950/50 opacity-50" : "hover:bg-zinc-900/60"}`}>
-                                                    <TableCell className="font-semibold text-white">
+                                                    <TableCell className="font-semibold text-white flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
+                                                            {cls.imageUrl ? <img src={cls.imageUrl} alt="class" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
+                                                        </div>
                                                         {cls.name} {cls.isCancelled && <span className="text-red-500 text-[10px] ml-2 font-black tracking-wider uppercase">Cancelled</span>}
                                                     </TableCell>
                                                     <TableCell className="text-zinc-400 text-xs font-medium">
                                                         {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
                                                         {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </TableCell>
-                                                    <TableCell className="text-zinc-300">{cls.coachName}</TableCell>
                                                     <TableCell>
-                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.roomName}</span>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className={`font-bold ${cls.currentBookings >= cls.maxAttendees ? "text-red-400" : "text-green-400"}`}>
-                                                            {cls.currentBookings} <span className="text-zinc-500">/ {cls.maxAttendees}</span>
-                                                        </span>
+                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.coachName} • {cls.roomName}</span>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         {!cls.isCancelled && (
@@ -707,41 +731,45 @@ export default function AdminDashboard() {
                     </TabsContent>
                 </Tabs>
             </div>
-
-            {/* MODALS */}
+            
+            {/* ROOM MODAL */}
             <Dialog open={isRoomModalOpen} onOpenChange={setIsRoomModalOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100">
+                <DialogContent className="sm:max-w-[500px] bg-zinc-950 border border-white/10 text-zinc-100 max-h-[90vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <DialogHeader>
                         <DialogTitle className="text-white">{editingRoomId ? "Edit Room" : "Create New Room"}</DialogTitle>
-                        <DialogDescription className="text-zinc-400">Define the physical space, capacity, and access restrictions.</DialogDescription>
+                        <DialogDescription className="text-zinc-400">Define the physical space, capacity, and set a visual background.</DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSaveRoom} className="space-y-5 mt-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name" className="text-zinc-300">Room Name</Label>
-                            <Input id="name" value={roomName} onChange={(e) => setRoomName(e.target.value)} required placeholder="e.g. Crossfit Arena" className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="capacity" className="text-zinc-300">Max Capacity</Label>
-                            <Input id="capacity" type="number" min="1" max="500" value={roomCapacity} onChange={(e) => setRoomCapacity(e.target.value)} required className="bg-zinc-900 border-white/10 text-white focus-visible:ring-orange-500" />
-                        </div>
-
-                        <div className="space-y-2 flex flex-col">
-                            <Label htmlFor="tier" className="text-zinc-300">Access Restriction (Tier)</Label>
-                            <select
-                                id="tier"
-                                value={requiredTierId}
-                                onChange={(e) => setRequiredTierId(e.target.value)}
-                                className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-                            >
-                                <option value="none">No Restriction (All Members)</option>
-                                {tiers?.map(tier => (
-                                    <option key={tier.id} value={tier.id}>Requires {tier.name} Tier or higher</option>
+                    <form onSubmit={handleSaveRoom} className="space-y-4 mt-4">
+                        <div className="space-y-3">
+                            <Label className="text-zinc-300">Select Room Background Image</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {PRESET_FACILITY_IMAGES.map((url, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={() => setRoomImageUrl(url)}
+                                        className={`h-16 rounded-md cursor-pointer overflow-hidden border-2 transition-all ${roomImageUrl === url ? 'border-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.3)] opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                    >
+                                        <img src={url} alt={`preset-${idx}`} className="w-full h-full object-cover" />
+                                    </div>
                                 ))}
-                            </select>
-                            <p className="text-xs text-zinc-500">Only members with this tier will be able to book classes here.</p>
+                            </div>
                         </div>
 
+                        <div className="space-y-2"><Label className="text-zinc-300">Room Name</Label><Input value={roomName} onChange={(e) => setRoomName(e.target.value)} required className="bg-zinc-900 border-white/10 text-white" /></div>
+
+                        <div className="space-y-2">
+                            <Label className="text-zinc-300">Room Description</Label>
+                            <textarea className="flex w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-500 min-h-[80px]" placeholder="Short description of the facility..." value={roomDescription} onChange={(e) => setRoomDescription(e.target.value)} />
+                        </div>
+
+                        <div className="space-y-2"><Label className="text-zinc-300">Max Capacity</Label><Input type="number" min="1" max="500" value={roomCapacity} onChange={(e) => setRoomCapacity(e.target.value)} required className="bg-zinc-900 border-white/10 text-white" /></div>
+                        <div className="space-y-2 flex flex-col">
+                            <Label className="text-zinc-300">Access Restriction (Tier)</Label>
+                            <select value={requiredTierId} onChange={(e) => setRequiredTierId(e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+                                <option value="none">No Restriction (All Members)</option>
+                                {tiers?.map(tier => <option key={tier.id} value={tier.id}>Requires {tier.name} Tier or higher</option>)}
+                            </select>
+                        </div>
                         <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none" disabled={saveRoomMutation.isPending}>
                             {saveRoomMutation.isPending ? "Saving..." : "Save Facility"}
                         </Button>
@@ -749,8 +777,9 @@ export default function AdminDashboard() {
                 </DialogContent>
             </Dialog>
 
+            {/* COACH MODAL */}
             <Dialog open={isCoachModalOpen} onOpenChange={setIsCoachModalOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100">
+                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <DialogHeader>
                         <DialogTitle className="text-white">Add Employee</DialogTitle>
                         <DialogDescription className="text-zinc-400">Register a new trainer. They will use this email and password to log in.</DialogDescription>
@@ -782,8 +811,9 @@ export default function AdminDashboard() {
                 </DialogContent>
             </Dialog>
 
+            {/* EDIT USER MODAL */}
             <Dialog open={isEditUserModalOpen} onOpenChange={setIsEditUserModalOpen}>
-                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100">
+                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border border-white/10 text-zinc-100 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <DialogHeader>
                         <DialogTitle className="text-white">Edit User Profile</DialogTitle>
                         <DialogDescription className="text-zinc-400">Update profile details. Fill out the password field only if you want to force a reset.</DialogDescription>
@@ -808,7 +838,7 @@ export default function AdminDashboard() {
                         <div className="space-y-2 bg-zinc-900/50 p-4 rounded-xl border border-white/5">
                             <Label className="text-zinc-300 font-semibold">Force Password Reset (Optional)</Label>
                             <Input
-                                type="text"
+                                type="password"
                                 placeholder="Enter new password..."
                                 value={editPassword}
                                 onChange={e => setEditPassword(e.target.value)}
@@ -824,54 +854,38 @@ export default function AdminDashboard() {
                 </DialogContent>
             </Dialog>
 
+            {/* CLASS MODAL */}
             <Dialog open={isClassModalOpen} onOpenChange={setIsClassModalOpen}>
-                <DialogContent className="sm:max-w-[500px] bg-zinc-950 border border-white/10 text-zinc-100">
+                <DialogContent className="sm:max-w-[500px] bg-zinc-950 border border-white/10 text-zinc-100 max-h-[90vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <DialogHeader>
                         <DialogTitle className="text-white">Schedule Group Class</DialogTitle>
-                        <DialogDescription className="text-zinc-400">Assign a coach, pick a room, and set capacity limits.</DialogDescription>
+                        <DialogDescription className="text-zinc-400">
+                            Assign a coach and a room.<br />
+                            <strong className="text-orange-400">The cover image will be automatically inherited from the room.</strong>
+                        </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={(e) => { e.preventDefault(); createClassMutation.mutate(); }} className="space-y-4 mt-4">
-                        <div className="space-y-2">
-                            <Label className="text-zinc-300">Class Title</Label>
-                            <Input value={className} onChange={e => setClassName(e.target.value)} required placeholder="e.g. HIIT Extreme" className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
-                        </div>
-
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        createClassMutation.mutate();
+                    }} className="space-y-4 mt-4">
+                        <div className="space-y-2"><Label className="text-zinc-300">Class Title</Label><Input value={className} onChange={e => setClassName(e.target.value)} required placeholder="e.g. Yoga Flow" className="bg-zinc-900 border-white/10 text-white" /></div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2 flex flex-col">
-                                <Label className="text-zinc-300">Assign Coach</Label>
-                                <select required value={classCoachId} onChange={e => setClassCoachId(e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
-                                    <option value="" disabled>Select Coach</option>
-                                    {systemCoaches?.filter(c => c.isActive).map(c => (
-                                        <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
-                                    ))}
+                            <div className="space-y-2 flex flex-col"><Label className="text-zinc-300">Coach</Label>
+                                <select required value={classCoachId} onChange={e => setClassCoachId(e.target.value)} className="flex h-10 rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white">
+                                    <option value="" disabled>Select Coach</option>{systemCoaches?.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                                 </select>
                             </div>
-                            <div className="space-y-2 flex flex-col">
-                                <Label className="text-zinc-300">Facility Room</Label>
-                                <select required value={classRoomId} onChange={e => setClassRoomId(e.target.value)} className="flex h-10 w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
-                                    <option value="" disabled>Select Room</option>
-                                    {rooms?.map(r => (
-                                        <option key={r.id} value={r.id}>{r.name} (Max: {r.maxCapacity})</option>
-                                    ))}
+                            <div className="space-y-2 flex flex-col"><Label className="text-zinc-300">Room</Label>
+                                <select required value={classRoomId} onChange={e => setClassRoomId(e.target.value)} className="flex h-10 rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white">
+                                    <option value="" disabled>Select Room</option>{rooms?.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                             </div>
                         </div>
-
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-zinc-300">Start Time</Label>
-                                <Input type="datetime-local" value={classStartTime} onChange={e => setClassStartTime(e.target.value)} required className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-zinc-300">End Time</Label>
-                                <Input type="datetime-local" value={classEndTime} onChange={e => setClassEndTime(e.target.value)} required className="bg-zinc-900 border-white/10 text-white [color-scheme:dark] focus-visible:ring-orange-500" />
-                            </div>
+                            <div className="space-y-2"><Label className="text-zinc-300">Start Time</Label><Input type="datetime-local" value={classStartTime} onChange={e => setClassStartTime(e.target.value)} required className="bg-zinc-900 border-white/10 text-white [color-scheme:dark]" /></div>
+                            <div className="space-y-2"><Label className="text-zinc-300">End Time</Label><Input type="datetime-local" value={classEndTime} onChange={e => setClassEndTime(e.target.value)} required className="bg-zinc-900 border-white/10 text-white [color-scheme:dark]" /></div>
                         </div>
-
-                        <div className="space-y-2">
-                            <Label className="text-zinc-300">Max Attendees Limit</Label>
-                            <Input type="number" min="1" value={classMaxAttendees} onChange={e => setClassMaxAttendees(e.target.value)} required placeholder="e.g. 15" className="bg-zinc-900 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-orange-500" />
-                        </div>
+                        <div className="space-y-2"><Label className="text-zinc-300">Attendees Limit</Label><Input type="number" min="1" value={classMaxAttendees} onChange={e => setClassMaxAttendees(e.target.value)} required className="bg-zinc-900 border-white/10 text-white" /></div>
 
                         <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2" disabled={createClassMutation.isPending}>
                             {createClassMutation.isPending ? "Scheduling..." : "Add to Calendar"}

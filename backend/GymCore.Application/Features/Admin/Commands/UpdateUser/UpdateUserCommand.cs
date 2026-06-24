@@ -31,7 +31,7 @@ namespace GymCore.Application.Features.Admin.Commands.UpdateUser
                 user.ChangePassword(newHash);
             }
             
-            user.Details.UpdateProfile(request.FirstName, request.LastName, user.Details.PhoneNumber, user.Details.AvatarUrl);
+            user.Details.UpdateProfile(request.FirstName, request.LastName, user.Details.AvatarUrl, user.Details.Bio);
 
             await context.SaveChangesAsync(cancellationToken);
         }

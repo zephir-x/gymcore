@@ -7,7 +7,7 @@ import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, CheckCircle2 } from 
 import { Button } from "@/components/ui/button"
 
 /* INTERFACES */
-interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number }
+interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null; }
 interface Reservation { reservationId: string; targetId: string; type: string }
 interface Subscription { subscriptionId: string; tierName: string; }
 
@@ -137,7 +137,17 @@ export default function Classes() {
 
                                     {/* CLASS CARD */}
                                     <div className={`flex-1 min-w-0 bg-zinc-900/40 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 rounded-2xl p-4 md:p-5 flex flex-col xl:flex-row justify-between xl:items-center gap-4 transition-all duration-300 relative overflow-hidden ${isFull && !isBooked ? "opacity-60" : ""}`}>
-                                        <div className="space-y-2 min-w-0">
+                                        {cls.imageUrl && (
+                                            <>
+                                                <img
+                                                    src={cls.imageUrl}
+                                                    alt="Background"
+                                                    className="absolute inset-0 w-full h-full object-cover grayscale opacity-10 group-hover:grayscale-0 group-hover:opacity-40 transition-all duration-700 mix-blend-luminosity group-hover:mix-blend-normal pointer-events-none"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pointer-events-none" />
+                                            </>
+                                        )}
+                                        <div className="space-y-2 min-w-0 relative z-10">
                                             <h3 className="text-lg md:text-xl font-bold text-white truncate">{cls.name}</h3>
                                             <div className="flex flex-wrap items-center gap-2 md:gap-4 text-[10px] md:text-xs font-semibold text-zinc-400">
                                                 <div className="flex items-center bg-zinc-950 px-2 py-1.5 rounded-lg border border-white/5 shrink-0">

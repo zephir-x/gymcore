@@ -11,7 +11,8 @@ namespace GymCore.Application.Features.Admin.Commands.CreateGroupClass
         Guid RoomId, 
         DateTime StartTime, 
         DateTime EndTime, 
-        int MaxAttendees) : IRequest<Guid>;
+        int MaxAttendees,
+        string? ImageUrl) : IRequest<Guid>;
 
     public class CreateGroupClassCommandHandler(IApplicationDbContext context)
         : IRequestHandler<CreateGroupClassCommand, Guid>
@@ -45,7 +46,8 @@ namespace GymCore.Application.Features.Admin.Commands.CreateGroupClass
                 request.RoomId,
                 request.StartTime,
                 request.EndTime,
-                request.MaxAttendees
+                request.MaxAttendees,
+                request.ImageUrl
             );
 
             context.GroupClasses.Add(groupClass);

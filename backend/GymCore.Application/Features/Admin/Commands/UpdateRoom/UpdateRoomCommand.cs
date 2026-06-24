@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Admin.Commands.UpdateRoom
 {
-    public record UpdateRoomCommand(Guid RoomId, string Name, int MaxCapacity, Guid? RequiredTierId) : IRequest;
+    public record UpdateRoomCommand(Guid RoomId, string Name, int MaxCapacity, string? ImageUrl, Guid? RequiredTierId, string? Description) : IRequest;
 
     public class UpdateRoomCommandHandler(IApplicationDbContext context) : IRequestHandler<UpdateRoomCommand>
     {
@@ -16,7 +16,7 @@ namespace GymCore.Application.Features.Admin.Commands.UpdateRoom
             if (room == null) 
                 throw new Exception("Room not found.");
             
-            room.UpdateDetails(request.Name, request.MaxCapacity, request.RequiredTierId);
+            room.UpdateDetails(request.Name, request.MaxCapacity, request.ImageUrl, request.RequiredTierId, request.Description);
             
             await context.SaveChangesAsync(cancellationToken);
         }
