@@ -78,7 +78,7 @@ namespace GymCore.Infrastructure.Data
             
             // Subscriptions
             var today = DateTime.UtcNow.Date;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 8; i++)
             {
                 var tierId = (i % 3 == 0) ? vipTier.Id : (i % 2 == 0 ? proTier.Id : basicTier.Id);
                 context.UserSubscriptions.Add(new UserSubscription(testMembers[i].Id, tierId, today.AddDays(-20), today.AddDays(15)));

@@ -15,12 +15,14 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (token: string) => void;
     logout: () => void;
+    isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     // A function that maps complex .NET names to a simple object
     const mapTokenToUser = (token: string): User => {
@@ -48,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 localStorage.removeItem('token');
             }
         }
+        setIsLoading(false);
     }, []);
 
     const login = (token: string) => {
@@ -61,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

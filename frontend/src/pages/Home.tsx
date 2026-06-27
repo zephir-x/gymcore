@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation, ArrowRight } from "lucide-react"
+import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -69,7 +69,7 @@ export default function Home() {
         },
         onError: (error: any) => {
             console.error("Booking error:", error)
-            toast.error("Booking Failed", { description: "Could not book this class. Make sure you have an active subscription." })
+            toast.error("Booking Failed", { description: "Could not book this class. Make sure you have a PRO or VIP subscription." })
         }
     })
 
@@ -111,8 +111,7 @@ export default function Home() {
         new Date(r.endTime).getTime() >= nowTime
     ) || []
 
-    const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
-        (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
+    const hasProOrVip = subscription?.tierName.toUpperCase() === "PRO" || subscription?.tierName.toUpperCase() === "VIP";
 
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
@@ -200,8 +199,8 @@ export default function Home() {
                     <section>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-white">Explore Facilities</h3>
-                            <Link to="/rooms">
-                                <Button variant="link" className="text-orange-500 hover:text-orange-400 p-0">Virtual Tour <ArrowRight size={16} className="ml-1" /></Button>
+                            <Link to="/rooms" className="text-sm font-semibold text-orange-500 hover:text-orange-400 transition-colors flex items-center">
+                                Virtual Tour <ChevronRight size={16} className="ml-1" />
                             </Link>
                         </div>
 
@@ -232,7 +231,7 @@ export default function Home() {
                                                 )}
 
                                                 <div className="relative z-10">
-                                                    <h4 className="text-white font-bold text-lg leading-tight mb-1 truncate">{room.name}</h4>
+                                                    <h4 className="text-white font-bold text-lg leading-tight mb-1">{room.name}</h4>
                                                     <div className="flex items-center text-zinc-500 text-xs font-medium">
                                                         <Users size={12} className="mr-1.5" /> Max Capacity: {room.maxCapacity}
                                                     </div>
@@ -302,16 +301,16 @@ export default function Home() {
 
                                                     <div className="relative z-10 flex justify-between items-start mb-4">
                                                         <div>
-                                                            <h4 className="text-white font-bold text-lg leading-tight truncate max-w-[130px]">{cls.name}</h4>
+                                                            <h4 className="text-white font-bold text-lg leading-tight">{cls.name}</h4>
                                                             <p className="text-orange-500 text-sm font-medium mt-0.5">{formatDate(cls.startTime)}</p>
                                                         </div>
                                                         <div className="flex flex-col items-end gap-1.5 shrink-0">
                                                             {isFull ? <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Full</span>
                                                                 : <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">{spotsLeft} left</span>}
 
-                                                            {discountBadge && (
-                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                                                                    {discountBadge} OFF
+                                                            {!hasProOrVip && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.1)]">
+                                                                    PRO Required
                                                                 </span>
                                                             )}
                                                         </div>
@@ -320,17 +319,19 @@ export default function Home() {
                                                         <Button
                                                             className={`w-full font-bold h-10 border-none transition-all duration-300 shadow-md ${
                                                                 !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                    isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                                        isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                            "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                                    !hasProOrVip ? "bg-zinc-800 text-orange-400 border border-orange-500/20 cursor-not-allowed" :
+                                                                        isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                                            isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                                "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
                                                             }`}
                                                             onClick={() => bookMutation.mutate(cls.id)}
-                                                            disabled={!subscription || isFull || isBooked || bookMutation.isPending}
+                                                            disabled={!subscription || !hasProOrVip || isFull || isBooked || bookMutation.isPending}
                                                         >
                                                             {bookMutation.isPending ? "Processing..." :
                                                                 !subscription ? "Requires Plan" :
-                                                                    isBooked ? <><CheckCircle2 size={16} /> Booked</> :
-                                                                        isFull ? "Waitlist (Soon)" : "Book Spot"}
+                                                                    !hasProOrVip ? "Upgrade to PRO" :
+                                                                        isBooked ? <><CheckCircle2 size={16} /> Booked</> :
+                                                                            isFull ? "Waitlist (Soon)" : "Book Spot"}
                                                         </Button>
                                                     </div>
                                                 </div>

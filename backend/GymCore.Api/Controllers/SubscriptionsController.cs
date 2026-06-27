@@ -30,9 +30,10 @@ namespace GymCore.Api.Controllers
                 return Unauthorized("Invalid user token.");
 
             var command = new BuySubscriptionCommand(userId, tierId, request.Months);
-            var subscriptionId = await sender.Send(command);
+            var checkoutUrl = await sender.Send(command);
 
-            return Ok(new { Message = "Subscription purchased successfully!", SubscriptionId = subscriptionId });
+            // We are backing the URL to frontend
+            return Ok(new { CheckoutUrl = checkoutUrl });
         }
         
         [HttpPost("cancel")]
@@ -42,9 +43,9 @@ namespace GymCore.Api.Controllers
             if (!Guid.TryParse(userIdString, out var userId))
                 return Unauthorized("Invalid user token.");
 
-            await sender.Send(new CancelSubscriptionCommand(userId));
+            var checkoutUrl = await sender.Send(new CancelSubscriptionCommand(userId));
 
-            return Ok(new { Message = "Subscription cancelled successfully." });
+            return Ok(new { CheckoutUrl = checkoutUrl });
         }
         
         [HttpGet("my-subscription")]

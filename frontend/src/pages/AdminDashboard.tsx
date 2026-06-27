@@ -681,46 +681,50 @@ export default function AdminDashboard() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {adminClasses.map((cls) => (
-                                                <TableRow key={cls.id} className={`border-b border-white/5 transition-colors ${cls.isCancelled ? "bg-zinc-950/50 opacity-50" : "hover:bg-zinc-900/60"}`}>
-                                                    <TableCell className="font-semibold text-white flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
-                                                            {cls.imageUrl ? <img src={cls.imageUrl} alt="class" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
-                                                        </div>
-                                                        {cls.name} {cls.isCancelled && <span className="text-red-500 text-[10px] ml-2 font-black tracking-wider uppercase">Cancelled</span>}
-                                                    </TableCell>
-                                                    <TableCell className="text-zinc-400 text-xs font-medium">
-                                                        {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
-                                                        {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.coachName} • {cls.roomName}</span>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        {!cls.isCancelled && (
-                                                            <AlertDialog>
-                                                                <AlertDialogTrigger asChild>
-                                                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Cancel</Button>
-                                                                </AlertDialogTrigger>
-                                                                <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Cancel Class</AlertDialogTitle>
-                                                                        <AlertDialogDescription className="text-zinc-400">
-                                                                            Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.
-                                                                        </AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
-                                                                        <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-red-600 hover:bg-red-700 text-white border-none">
-                                                                            Yes, cancel class
-                                                                        </AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
+                                            {adminClasses.map((cls) => {
+                                                const room = rooms?.find(r => r.name === cls.roomName);
+                                                const imageUrl = cls.imageUrl || room?.imageUrl;
+                                                return (
+                                                    <TableRow key={cls.id} className={`border-b border-white/5 transition-colors ${cls.isCancelled ? "bg-zinc-950/50 opacity-50" : "hover:bg-zinc-900/60"}`}>
+                                                        <TableCell className="font-semibold text-white flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
+                                                                {imageUrl ? <img src={imageUrl} alt="class" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
+                                                            </div>
+                                                            {cls.name} {cls.isCancelled && <span className="text-red-500 text-[10px] ml-2 font-black tracking-wider uppercase">Cancelled</span>}
+                                                        </TableCell>
+                                                        <TableCell className="text-zinc-400 text-xs font-medium">
+                                                            {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
+                                                            {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.coachName} • {cls.roomName}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {!cls.isCancelled && (
+                                                                <AlertDialog>
+                                                                    <AlertDialogTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Cancel</Button>
+                                                                    </AlertDialogTrigger>
+                                                                    <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
+                                                                        <AlertDialogHeader>
+                                                                            <AlertDialogTitle>Cancel Class</AlertDialogTitle>
+                                                                            <AlertDialogDescription className="text-zinc-400">
+                                                                                Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.
+                                                                            </AlertDialogDescription>
+                                                                        </AlertDialogHeader>
+                                                                        <AlertDialogFooter>
+                                                                            <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
+                                                                            <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-red-600 hover:bg-red-700 text-white border-none">
+                                                                                Yes, cancel class
+                                                                            </AlertDialogAction>
+                                                                        </AlertDialogFooter>
+                                                                    </AlertDialogContent>
+                                                                </AlertDialog>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
                                         </TableBody>
                                     </Table>
                                 ) : (

@@ -4,7 +4,6 @@ import { Link, useSearchParams } from "react-router-dom"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { ArrowLeft, Clock, Calendar as CalendarIcon } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -16,8 +15,6 @@ interface Subscription { subscriptionId: string; tierName: string; }
 /* COMPONENT */
 export default function PersonalTraining() {
     const queryClient = useQueryClient()
-
-    /* STATE & HOOKS */
     const [searchParams] = useSearchParams()
     const urlCoachId = searchParams.get("coachId")
     const [selectedCoachId, setSelectedCoachId] = useState<string | null>(urlCoachId)
@@ -45,8 +42,7 @@ export default function PersonalTraining() {
         retry: false
     })
 
-    const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
-        (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
+    const hasVip = subscription?.tierName.toUpperCase() === "VIP";
 
     /* MUTATIONS */
     const bookSlotMutation = useMutation({
@@ -60,7 +56,7 @@ export default function PersonalTraining() {
         },
         onError: (error: any) => {
             console.error("Booking Error:", error)
-            toast.error("Booking Failed", { description: "Could not book this slot. Make sure you have an active subscription." })
+            toast.error("Booking Failed", { description: "Could not book this slot. Make sure you have a VIP subscription." })
         }
     })
 
@@ -78,12 +74,10 @@ export default function PersonalTraining() {
     /* RENDER */
     return (
         <div className="h-screen w-full bg-zinc-950 text-zinc-100 font-sans p-4 md:p-12 overflow-y-auto overflow-x-hidden select-none relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {/* AMBIENT GLOW EFFECTS */}
             <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
 
             <div className="max-w-5xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
-                {/* HEADER */}
                 <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0">
                     <div className="flex items-center gap-4">
                         <Link to="/">
@@ -162,9 +156,9 @@ export default function PersonalTraining() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:pr-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:pr-4">
                                             {dailySlots.map(slot => (
-                                                <div key={slot.id} className="relative overflow-hidden flex justify-between items-center p-4 rounded-xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 transition-colors group">
+                                                <div key={slot.id} className="relative overflow-hidden flex justify-between items-center p-5 rounded-xl bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 transition-colors group">
                                                     <div className="flex items-center gap-3 relative z-10">
                                                         <div className="p-2 bg-zinc-950 rounded-lg border border-white/5 group-hover:border-orange-500/30 transition-colors shrink-0">
                                                             <Clock size={16} className="text-zinc-400 group-hover:text-orange-500 transition-colors" />
@@ -173,23 +167,23 @@ export default function PersonalTraining() {
                                                             {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                                                         </span>
 
-                                                        {discountBadge && (
-                                                            <span className="ml-1 px-2 py-0.5 rounded text-[10px] font-black bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
-                                                                {discountBadge} OFF
+                                                        {!hasVip && (
+                                                            <span className="ml-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                                                                VIP ONLY
                                                             </span>
                                                         )}
                                                     </div>
 
                                                     <Button
                                                         onClick={() => bookSlotMutation.mutate(slot.id)}
-                                                        disabled={!subscription || bookSlotMutation.isPending}
+                                                        disabled={!subscription || !hasVip || bookSlotMutation.isPending}
                                                         className={`font-bold h-9 relative z-10 transition-colors shrink-0 ml-2 ${
-                                                            !subscription
+                                                            !subscription || !hasVip
                                                                 ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                                                                 : "bg-zinc-800 text-zinc-300 hover:bg-orange-500 hover:text-white"
                                                         }`}
                                                     >
-                                                        {bookSlotMutation.isPending ? "..." : !subscription ? "Requires Plan" : "Book"}
+                                                        {bookSlotMutation.isPending ? "..." : !subscription ? "Requires Plan" : !hasVip ? "Upgrade to VIP" : "Book"}
                                                     </Button>
                                                 </div>
                                             ))}

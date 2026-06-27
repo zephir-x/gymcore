@@ -20,6 +20,9 @@ namespace GymCore.Infrastructure.Data.Configurations
                 .WithMany()
                 .HasForeignKey(x => x.TierId)
                 .OnDelete(DeleteBehavior.Restrict); // You cannot remove a package from the database if someone has purchased it
+            
+            builder.Property(x => x.PaymentIntentId)
+                .IsRequired(false);
         }
     }
 }

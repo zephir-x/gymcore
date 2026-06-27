@@ -73,7 +73,15 @@ export default function MemberDashboard() {
 
     const cancelSubscriptionMutation = useMutation({
         mutationFn: async () => (await api.post('/api/subscriptions/cancel')).data,
-        onSuccess: async () => { toast.success("Subscription Cancelled"); await queryClient.invalidateQueries({ queryKey: ['my-subscription'] }); setIsManaging(false) },
+        onSuccess: (data: any) => {
+            if (data.checkoutUrl) {
+                window.location.href = data.checkoutUrl;
+            } else {
+                toast.success("Subscription Cancelled");
+                queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
+                setIsManaging(false);
+            }
+        },
     })
 
     // DYNAMIC METRICS CALCULATION (BMI & BODY FAT EST)

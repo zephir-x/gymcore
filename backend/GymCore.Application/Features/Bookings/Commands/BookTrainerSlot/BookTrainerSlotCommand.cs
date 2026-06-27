@@ -11,24 +11,30 @@ namespace GymCore.Application.Features.Bookings.Commands.BookTrainerSlot
     {
         public async Task Handle(BookTrainerSlotCommand request, CancellationToken cancellationToken)
         {
-            // Does the user have an active pass?
-            var hasActiveSubscription = await context.UserSubscriptions
-                .AnyAsync(s => s.UserId == request.UserId && s.Status == SubscriptionStatus.Active, cancellationToken);
+            var activeSubscription = await context.UserSubscriptions
+                .Include(s => s.Tier)
+                .Where(s => s.UserId == request.UserId && s.EndDate >= DateTime.UtcNow && s.Status == SubscriptionStatus.Active)
+                .OrderByDescending(s => s.EndDate)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (!hasActiveSubscription)
-                throw new Exception("You must have an active subscription to book a personal training.");
+            if (activeSubscription == null)
+                throw new Exception("You need an active subscription to book a personal training.");
 
-            // We download the trainer window
+            // We check if it's a VIP
+            var tierName = activeSubscription.Tier.Name.ToUpper();
+            if (tierName != "VIP")
+            {
+                throw new Exception("Personal 1:1 training requires a VIP membership.");
+            }
+
             var slot = await context.TrainerSlots
                 .FirstOrDefaultAsync(s => s.Id == request.SlotId, cancellationToken);
 
             if (slot == null)
                 throw new Exception("Trainer slot not found.");
 
-            // We reserve (our domain method will throw an error if the slot is already occupied)
             slot.Book(request.UserId);
 
-            // Optimistic Concurrency Lock Write
             try
             {
                 await context.SaveChangesAsync(cancellationToken);

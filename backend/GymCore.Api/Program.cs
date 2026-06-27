@@ -6,6 +6,7 @@ using GymCore.Infrastructure.Data;
 using GymCore.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +62,10 @@ builder.Services.AddControllers();
 // Add services to the container
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Registration for Stripe
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"] ?? throw new InvalidOperationException("Stripe:SecretKey is missing in configuration");
+builder.Services.AddScoped<GymCore.Application.Common.Services.StripePaymentService>();
 
 var app = builder.Build();
 

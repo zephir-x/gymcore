@@ -14,8 +14,6 @@ interface Subscription { subscriptionId: string; tierName: string; }
 /* COMPONENT */
 export default function Classes() {
     const queryClient = useQueryClient()
-
-    /* STATE & HOOKS */
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
     /* QUERIES */
@@ -28,7 +26,7 @@ export default function Classes() {
         queryKey: ['my-reservations'],
         queryFn: async () => { const res = await api.get('/api/bookings/my-reservations'); return res.data }
     })
-    
+
     const { data: subscription } = useQuery<Subscription | null>({
         queryKey: ['my-subscription'],
         queryFn: async () => {
@@ -38,8 +36,7 @@ export default function Classes() {
         retry: false
     })
 
-    const discountBadge = subscription?.tierName === "VIP" ? "-25%" :
-        (subscription?.tierName === "Pro" || subscription?.tierName === "PRO") ? "-10%" : null;
+    const hasProOrVip = subscription?.tierName.toUpperCase() === "PRO" || subscription?.tierName.toUpperCase() === "VIP";
 
     /* MUTATIONS */
     const bookMutation = useMutation({
@@ -53,7 +50,7 @@ export default function Classes() {
         },
         onError: (error: any) => {
             console.error("Booking Error:", error)
-            toast.error("Booking Failed", { description: "Could not book this class. An active subscription is required." })
+            toast.error("Booking Failed", { description: "Could not book this class. Requires PRO or VIP plan." })
         }
     })
 
@@ -71,12 +68,10 @@ export default function Classes() {
     /* RENDER */
     return (
         <div className="h-screen w-full bg-zinc-950 text-zinc-100 font-sans p-4 md:p-12 overflow-y-auto overflow-x-hidden select-none relative [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {/* AMBIENT GLOW EFFECTS */}
             <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[150px] pointer-events-none" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
 
             <div className="max-w-4xl mx-auto relative z-10 space-y-8 animate-in fade-in duration-500 pb-12">
-                {/* HEADER */}
                 <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0">
                     <div className="flex items-center gap-4">
                         <Link to="/">
@@ -91,7 +86,6 @@ export default function Classes() {
                     </div>
                 </div>
 
-                {/* HORIZONTAL WEEK CALENDAR STRIP */}
                 <div className="bg-zinc-900/30 border border-white/5 p-3 pb-4 rounded-2xl flex justify-start gap-2 overflow-x-auto shrink-0 snap-x snap-mandatory [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-zinc-700">
                     {daysOfWeek.map((day, idx) => {
                         const isSelected = day.toDateString() === selectedDate.toDateString()
@@ -112,7 +106,6 @@ export default function Classes() {
                     })}
                 </div>
 
-                {/* CLASSES TIMELINE */}
                 <div key={selectedDate.toISOString()} className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500 fill-mode-forwards">
                     {isLoading ? (
                         [1, 2, 3].map((i) => (
@@ -129,13 +122,11 @@ export default function Classes() {
 
                             return (
                                 <div key={cls.id} className="flex gap-4 md:gap-6 items-start md:items-center group">
-                                    {/* TIME INDICATOR */}
                                     <div className="w-12 md:w-16 pt-3 md:pt-0 shrink-0 flex flex-col text-center md:text-left">
                                         <span className="text-base md:text-lg font-black text-white group-hover:text-orange-500 transition-colors">{formatTime(cls.startTime)}</span>
                                         <span className="text-[9px] md:text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Start</span>
                                     </div>
 
-                                    {/* CLASS CARD */}
                                     <div className={`flex-1 min-w-0 bg-zinc-900/40 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 rounded-2xl p-4 md:p-5 flex flex-col xl:flex-row justify-between xl:items-center gap-4 transition-all duration-300 relative overflow-hidden ${isFull && !isBooked ? "opacity-60" : ""}`}>
                                         {cls.imageUrl && (
                                             <>
@@ -158,10 +149,10 @@ export default function Classes() {
                                                     <Users size={12} className="mr-1.5 text-orange-500" />
                                                     {isFull ? <span className="text-red-400 font-bold">Full ({cls.maxAttendees}/{cls.maxAttendees})</span> : <span>{spotsLeft} Spots Left</span>}
                                                 </div>
-                                                
-                                                {discountBadge && (
-                                                    <div className="flex items-center bg-red-500/10 px-2 py-1.5 rounded-lg border border-red-500/20 text-red-400 shrink-0 font-bold">
-                                                        {discountBadge} OFF
+
+                                                {!hasProOrVip && (
+                                                    <div className="flex items-center bg-orange-500/10 px-2 py-1.5 rounded-lg border border-orange-500/20 text-orange-400 shrink-0 font-bold shadow-[0_0_10px_rgba(249,115,22,0.1)]">
+                                                        PRO Required
                                                     </div>
                                                 )}
                                             </div>
@@ -170,18 +161,20 @@ export default function Classes() {
                                         <div className="w-full xl:w-auto shrink-0 mt-2 xl:mt-0 relative z-10">
                                             <Button
                                                 onClick={() => bookMutation.mutate(cls.id)}
-                                                disabled={!subscription || isFull || isBooked || bookMutation.isPending}
+                                                disabled={!subscription || !hasProOrVip || isFull || isBooked || bookMutation.isPending}
                                                 className={`w-full xl:w-[140px] h-10 md:h-11 font-bold border-none transition-all duration-300 shadow-md ${
                                                     !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                        isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                            isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                        !hasProOrVip ? "bg-zinc-800 text-orange-400 border border-orange-500/20 cursor-not-allowed" :
+                                                            isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                                isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
+                                                                    "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
                                                 }`}
                                             >
                                                 {bookMutation.isPending ? "Processing..." :
                                                     !subscription ? "Requires Plan" :
-                                                        isBooked ? <><CheckCircle2 size={16} /> Booked</> :
-                                                            isFull ? "Full" : "Book Class"}
+                                                        !hasProOrVip ? "Upgrade to PRO" :
+                                                            isBooked ? <><CheckCircle2 size={16} /> Booked</> :
+                                                                isFull ? "Full" : "Book Class"}
                                             </Button>
                                         </div>
                                     </div>
@@ -189,7 +182,6 @@ export default function Classes() {
                             )
                         })
                     ) : (
-                        /* EMPTY STATE */
                         <div className="text-center py-12 md:py-16 bg-zinc-900/10 border border-dashed border-zinc-800 rounded-2xl p-6 max-w-md mx-auto">
                             <div className="p-3 bg-zinc-900/50 rounded-full w-fit mx-auto mb-4 border border-white/5">
                                 <CalendarIcon size={24} className="text-zinc-600" />

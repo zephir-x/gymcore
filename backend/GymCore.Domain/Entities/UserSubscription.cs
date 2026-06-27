@@ -11,6 +11,7 @@ namespace GymCore.Domain.Entities
         public DateTime StartDate { get; private set; }
         public DateTime EndDate { get; private set; }
         public SubscriptionStatus Status { get; private set; }
+        public string? PaymentIntentId { get; private set; }
         
         // Navigation properties
         public User User { get; private set; }
@@ -18,40 +19,24 @@ namespace GymCore.Domain.Entities
 
         protected UserSubscription() { }
 
-        public UserSubscription(Guid userId, Guid tierId, DateTime startDate, DateTime endDate)
+        public UserSubscription(Guid userId, Guid tierId, DateTime startDate, DateTime endDate, string? paymentIntentId = null)
         {
             UserId = userId;
             TierId = tierId;
             StartDate = startDate;
             EndDate = endDate;
-            Status = SubscriptionStatus.Active; // Active by default upon purchase
+            Status = SubscriptionStatus.Active;
+            PaymentIntentId = paymentIntentId;
         }
 
         // Domain logic for handling state changes
-        public void Freeze()
-        {
-            if (Status == SubscriptionStatus.Active)
-            {
-                Status = SubscriptionStatus.Frozen;
-                Update();
-            }
-        }
-
-        public void Unfreeze()
-        {
-            if (Status == SubscriptionStatus.Frozen)
-            {
-                Status = SubscriptionStatus.Active;
-                Update();
-            }
-        }
-
         public void Cancel()
         {
             // We can only cancel if it is not already canceled (or possibly expired)
             if (Status != SubscriptionStatus.Cancelled && Status != SubscriptionStatus.Expired)
             {
                 Status = SubscriptionStatus.Cancelled;
+                EndDate = DateTime.UtcNow; // Immediate access cut-off
                 Update();
             }
         }
