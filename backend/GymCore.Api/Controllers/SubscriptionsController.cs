@@ -45,6 +45,11 @@ namespace GymCore.Api.Controllers
 
             var checkoutUrl = await sender.Send(new CancelSubscriptionCommand(userId));
 
+            if (checkoutUrl == null)
+            {
+                return Ok(new { Message = "Subscription cancelled successfully." });
+            }
+
             return Ok(new { CheckoutUrl = checkoutUrl });
         }
         

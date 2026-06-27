@@ -1,5 +1,5 @@
-﻿import { useState } from "react"
-import { Link } from "react-router-dom"
+﻿import { useState, useEffect } from "react"
+import { Link, useSearchParams } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
@@ -7,14 +7,22 @@ import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, CheckCircle2 } from 
 import { Button } from "@/components/ui/button"
 
 /* INTERFACES */
-interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null; }
+interface GroupClass { id: string; name: string; coachName: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null; }
 interface Reservation { reservationId: string; targetId: string; type: string }
 interface Subscription { subscriptionId: string; tierName: string; }
 
 /* COMPONENT */
 export default function Classes() {
     const queryClient = useQueryClient()
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+    const [searchParams] = useSearchParams();
+    const dateParam = searchParams.get('date');
+    const [selectedDate, setSelectedDate] = useState<Date>(dateParam ? new Date(dateParam) : new Date())
+
+    useEffect(() => {
+        if (dateParam) {
+            setSelectedDate(new Date(dateParam));
+        }
+    }, [dateParam]);
 
     /* QUERIES */
     const { data: classes, isLoading } = useQuery<GroupClass[]>({
@@ -140,6 +148,7 @@ export default function Classes() {
                                         )}
                                         <div className="space-y-2 min-w-0 relative z-10">
                                             <h3 className="text-lg md:text-xl font-bold text-white truncate">{cls.name}</h3>
+                                            <p className="text-zinc-400 text-sm font-medium">with {cls.coachName}</p>
                                             <div className="flex flex-wrap items-center gap-2 md:gap-4 text-[10px] md:text-xs font-semibold text-zinc-400">
                                                 <div className="flex items-center bg-zinc-950 px-2 py-1.5 rounded-lg border border-white/5 shrink-0">
                                                     <Clock size={12} className="mr-1.5 text-orange-500" />

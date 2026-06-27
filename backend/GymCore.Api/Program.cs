@@ -57,7 +57,9 @@ builder.Services.AddMediatR(cfg => {
 });
 
 // We are adding support for controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options => {
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+});
 
 // Add services to the container
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

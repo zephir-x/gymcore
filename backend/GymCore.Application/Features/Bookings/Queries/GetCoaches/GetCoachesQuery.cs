@@ -2,10 +2,16 @@
 using GymCore.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace GymCore.Application.Features.Bookings.Queries.GetCoaches
 {
-    public record CoachDto(Guid Id, string FirstName, string LastName, string? AvatarUrl);
+    public record CoachDto(
+        Guid Id, 
+        string FirstName, 
+        string LastName, 
+        string? AvatarUrl, 
+        string? Bio);
 
     public record GetCoachesQuery() : IRequest<List<CoachDto>>;
 
@@ -17,7 +23,7 @@ namespace GymCore.Application.Features.Bookings.Queries.GetCoaches
                 .AsNoTracking()
                 .Include(u => u.Details)
                 .Where(u => u.Role == UserRole.Coach)
-                .Select(u => new CoachDto(u.Id, u.Details.FirstName, u.Details.LastName, u.Details.AvatarUrl))
+                .Select(u => new CoachDto(u.Id, u.Details.FirstName, u.Details.LastName, u.Details.AvatarUrl, u.Details.Bio))
                 .ToListAsync(cancellationToken);
         }
     }

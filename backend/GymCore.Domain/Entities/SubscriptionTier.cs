@@ -7,23 +7,18 @@ namespace GymCore.Domain.Entities
         public string Name { get; private set; }
         public decimal MonthlyPrice { get; private set; }
         
-        // e.g. 0.20 means a 20% discount on personal training sessions
-        public decimal DiscountPercentage { get; private set; }
-
         protected SubscriptionTier() { }
 
-        public SubscriptionTier(string name, decimal monthlyPrice, decimal discountPercentage = 0)
+        public SubscriptionTier(string name, decimal monthlyPrice)
         {
             Name = name;
             MonthlyPrice = monthlyPrice;
-            DiscountPercentage = discountPercentage;
         }
 
-        public void UpdateTier(string name, decimal price, decimal discount)
+        public void UpdateTier(string name, decimal price)
         {
             Name = name;
             MonthlyPrice = price;
-            DiscountPercentage = discount;
             Update();
         }
     }

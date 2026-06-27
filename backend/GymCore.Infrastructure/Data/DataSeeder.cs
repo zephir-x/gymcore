@@ -13,9 +13,9 @@ namespace GymCore.Infrastructure.Data
             if (await context.Users.AnyAsync(u => u.Role == UserRole.Coach)) return;
             
             // Subscription Tiers
-            var basicTier = new SubscriptionTier("Basic", 149.99m, 0m);         
-            var proTier = new SubscriptionTier("Pro", 199.99m, 0.10m);          
-            var vipTier = new SubscriptionTier("VIP", 259.99m, 0.25m);          
+            var basicTier = new SubscriptionTier("Basic", 149.99m);         
+            var proTier = new SubscriptionTier("Pro", 199.99m);          
+            var vipTier = new SubscriptionTier("VIP", 259.99m);          
             
             context.SubscriptionTiers.AddRange(basicTier, proTier, vipTier);
             await context.SaveChangesAsync();

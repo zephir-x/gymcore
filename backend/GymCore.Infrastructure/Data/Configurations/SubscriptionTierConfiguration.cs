@@ -13,7 +13,6 @@ namespace GymCore.Infrastructure.Data.Configurations
 
             builder.Property(x => x.Name).IsRequired().HasMaxLength(100);
             builder.Property(x => x.MonthlyPrice).HasColumnType("decimal(18,2)");
-            builder.Property(x => x.DiscountPercentage).HasColumnType("decimal(5,2)");
         }
     }
 }

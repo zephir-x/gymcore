@@ -8,12 +8,12 @@ using Stripe.Checkout;
 
 namespace GymCore.Application.Features.Subscriptions.Commands.CancelSubscription
 {
-    public record CancelSubscriptionCommand(Guid UserId) : IRequest<string>;
+    public record CancelSubscriptionCommand(Guid UserId) : IRequest<string?>;
 
     public class CancelSubscriptionCommandHandler(IApplicationDbContext context, IConfiguration configuration)
-        : IRequestHandler<CancelSubscriptionCommand, string>
+        : IRequestHandler<CancelSubscriptionCommand, string?>
     {
-        public async Task<string> Handle(CancelSubscriptionCommand request, CancellationToken cancellationToken)
+        public async Task<string?> Handle(CancelSubscriptionCommand request, CancellationToken cancellationToken)
         {
             var activeSubscription = await context.UserSubscriptions
                 .Include(s => s.Tier)
@@ -21,6 +21,13 @@ namespace GymCore.Application.Features.Subscriptions.Commands.CancelSubscription
 
             if (activeSubscription == null)
                 throw new Exception("You do not have any active subscription to cancel.");
+
+            if (string.IsNullOrEmpty(activeSubscription.PaymentIntentId))
+            {
+                activeSubscription.Cancel();
+                await context.SaveChangesAsync(cancellationToken);
+                return null;
+            }
 
             // Calculate refund amount
             var totalPaid = activeSubscription.Tier.MonthlyPrice;

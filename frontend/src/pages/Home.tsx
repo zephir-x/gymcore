@@ -5,16 +5,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { LogOut, Clock, ChevronRight, CheckCircle2, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation } from "lucide-react"
+import { LogOut, Clock, ChevronRight, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 
-interface GroupClass { id: string; name: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null }
+interface GroupClass { id: string; name: string; coachName: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null }
 interface Reservation { reservationId: string; targetId: string | null; title: string; trainerName: string; startTime: string; endTime: string; status: string; type: string; }
 interface Subscription { subscriptionId: string; tierName: string; startDate: string; endDate: string; status: string; }
-interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null }
+interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null; bio?: string | null }
 interface Room { id: string; name: string; maxCapacity: number; requiredTierId: string | null; requiredTierName: string | null; imageUrl?: string | null; description?: string | null }
 
 export default function Home() {
@@ -22,6 +22,8 @@ export default function Home() {
     const queryClient = useQueryClient()
 
     const [selectedRoomDetails, setSelectedRoomDetails] = useState<Room | null>(null);
+    const [selectedClassDetails, setSelectedClassDetails] = useState<GroupClass | null>(null);
+    const [selectedCoachDetails, setSelectedCoachDetails] = useState<Coach | null>(null);
 
     /* QUERIES */
     const { data: classes, isLoading: isClassesLoading } = useQuery<GroupClass[]>({
@@ -58,21 +60,6 @@ export default function Home() {
     })
 
     /* MUTATIONS */
-    const bookMutation = useMutation({
-        mutationFn: async (classId: string) => { const res = await api.post(`/api/bookings/classes/${classId}`); return res.data },
-        onSuccess: async (data) => {
-            toast.success("Spot Secured!", { description: data.Message || "You have successfully booked the class." })
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['classes'] }),
-                queryClient.invalidateQueries({ queryKey: ['my-reservations'] })
-            ])
-        },
-        onError: (error: any) => {
-            console.error("Booking error:", error)
-            toast.error("Booking Failed", { description: "Could not book this class. Make sure you have a PRO or VIP subscription." })
-        }
-    })
-
     const cancelReservationMutation = useMutation({
         mutationFn: async (reservationId: string) => {
             const res = await api.delete(`/api/bookings/reservations/${reservationId}`)
@@ -287,10 +274,13 @@ export default function Home() {
                                         {classes.slice(0, 5).map((cls) => {
                                             const isFull = cls.currentBookings >= cls.maxAttendees
                                             const spotsLeft = cls.maxAttendees - cls.currentBookings
-                                            const isBooked = reservations?.some(r => r.targetId === cls.id && r.type === "Group")
 
                                             return (
-                                                <div key={cls.id} className={`w-[300px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group ${isFull ? "opacity-80" : ""}`}>
+                                                <div 
+                                                    key={cls.id} 
+                                                    onClick={() => setSelectedClassDetails(cls)}
+                                                    className={`w-[300px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group ${isFull ? "opacity-80" : ""} cursor-pointer`}
+                                                >
                                                     {/* DYNAMIC BACKGROUND IMAGE FOR CLASSES */}
                                                     {cls.imageUrl && (
                                                         <>
@@ -316,23 +306,13 @@ export default function Home() {
                                                         </div>
                                                     </div>
                                                     <div className="relative z-10">
-                                                        <Button
-                                                            className={`w-full font-bold h-10 border-none transition-all duration-300 shadow-md ${
-                                                                !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                    !hasProOrVip ? "bg-zinc-800 text-orange-400 border border-orange-500/20 cursor-not-allowed" :
-                                                                        isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                                            isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                                "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
-                                                            }`}
-                                                            onClick={() => bookMutation.mutate(cls.id)}
-                                                            disabled={!subscription || !hasProOrVip || isFull || isBooked || bookMutation.isPending}
-                                                        >
-                                                            {bookMutation.isPending ? "Processing..." :
-                                                                !subscription ? "Requires Plan" :
-                                                                    !hasProOrVip ? "Upgrade to PRO" :
-                                                                        isBooked ? <><CheckCircle2 size={16} /> Booked</> :
-                                                                            isFull ? "Waitlist (Soon)" : "Book Spot"}
-                                                        </Button>
+                                                        <Link to={`/classes?date=${cls.startTime.split('T')[0]}`}>
+                                                            <Button
+                                                                className="w-full font-bold h-10 border-none transition-all duration-300 shadow-md bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white"
+                                                            >
+                                                                View in Calendar
+                                                            </Button>
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             )
@@ -371,7 +351,11 @@ export default function Home() {
                                 ) : coaches && coaches.length > 0 ? (
                                     <>
                                         {coaches.slice(0, 5).map((coach) => (
-                                            <div key={coach.id} className="w-[280px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between">
+                                            <div 
+                                                key={coach.id} 
+                                                onClick={() => setSelectedCoachDetails(coach)}
+                                                className="w-[280px] shrink-0 snap-start bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/60 hover:border-white/10 transition-all duration-300 rounded-2xl p-5 flex flex-col justify-between cursor-pointer"
+                                            >
                                                 <div className="flex items-center gap-4 mb-4">
                                                     <div className="h-12 w-12 rounded-full border border-orange-500 shrink-0 overflow-hidden bg-zinc-800 flex items-center justify-center">
                                                         {coach.avatarUrl ? (
@@ -560,6 +544,62 @@ export default function Home() {
                             {selectedRoomDetails?.description || "Experience top-tier fitness in our expertly designed facility, crafted to help you push your limits and achieve your goals."}
                         </p>
                         <Button className="w-full mt-6 bg-zinc-900 hover:bg-zinc-800 text-white border border-white/5" onClick={() => setSelectedRoomDetails(null)}>Close View</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* CLASS DETAILS MODAL */}
+            <Dialog open={!!selectedClassDetails} onOpenChange={() => setSelectedClassDetails(null)}>
+                <DialogContent className="sm:max-w-[450px] p-0 bg-zinc-950 border border-white/10 overflow-hidden">
+                    <div className="w-full h-[250px] relative">
+                        {selectedClassDetails?.imageUrl ? (
+                            <img src={selectedClassDetails.imageUrl} alt={selectedClassDetails.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                                <span className="text-zinc-600">No Image</span>
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none" />
+                        <div className="absolute bottom-4 left-6">
+                            <h2 className="text-2xl font-black text-white">{selectedClassDetails?.name}</h2>
+                            <p className="text-orange-500 font-bold">{selectedClassDetails && formatDate(selectedClassDetails.startTime)} • {selectedClassDetails && formatTime(selectedClassDetails.startTime)}</p>
+                        </div>
+                    </div>
+                    <div className="px-6 pb-6 pt-2">
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="bg-zinc-900/50 p-3 rounded-xl border border-white/5">
+                                <span className="text-[10px] text-zinc-500 font-bold uppercase">Coach</span>
+                                <p className="text-white font-bold text-sm">{selectedClassDetails?.coachName}</p>
+                            </div>
+                            <div className="bg-zinc-900/50 p-3 rounded-xl border border-white/5">
+                                <span className="text-[10px] text-zinc-500 font-bold uppercase">Availability</span>
+                                <p className="text-white font-bold text-sm">{selectedClassDetails && selectedClassDetails.maxAttendees - selectedClassDetails.currentBookings} spots left</p>
+                            </div>
+                        </div>
+                        <Link to={`/classes?date=${selectedClassDetails?.startTime.split('T')[0]}`} onClick={() => setSelectedClassDetails(null)}>
+                            <Button className="w-full font-bold h-10 border-none transition-all duration-300 shadow-md bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white">View in Calendar</Button>
+                        </Link>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* COACH DETAILS MODAL */}
+            <Dialog open={!!selectedCoachDetails} onOpenChange={() => setSelectedCoachDetails(null)}>
+                <DialogContent className="sm:max-w-[450px] p-6 bg-zinc-950 border border-white/10 overflow-hidden">
+                    <div className="flex flex-col items-center text-center">
+                        <div className="h-24 w-24 rounded-full border-2 border-orange-500 overflow-hidden bg-zinc-800 mb-4 flex items-center justify-center">
+                            {selectedCoachDetails?.avatarUrl ? (
+                                <img src={selectedCoachDetails.avatarUrl} alt="Coach" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-orange-500 text-3xl font-bold">{selectedCoachDetails?.firstName[0]}{selectedCoachDetails?.lastName[0]}</span>
+                            )}
+                        </div>
+                        <h2 className="text-2xl font-black text-white mb-1">{selectedCoachDetails?.firstName} {selectedCoachDetails?.lastName}</h2>
+                        <p className="text-orange-500 font-medium mb-6">Expert Trainer</p>
+                        <p className="text-sm text-zinc-400 leading-relaxed mb-6">{selectedCoachDetails?.bio || "Highly experienced fitness professional dedicated to helping you achieve your full potential."}</p>
+                        <Link to={`/personal-training?coachId=${selectedCoachDetails?.id}`} onClick={() => setSelectedCoachDetails(null)} className="w-full">
+                            <Button className="w-full font-bold h-10 border-none transition-all duration-300 shadow-md bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white">View Schedule</Button>
+                        </Link>
                     </div>
                 </DialogContent>
             </Dialog>

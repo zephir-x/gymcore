@@ -53,7 +53,7 @@ namespace GymCore.Api.Controllers
                         var tierId = Guid.Parse(session.Metadata["TierId"]);
                         var months = int.Parse(session.Metadata["Months"]);
 
-                        logger.LogInformation($"Zaksięgowano wpłatę! Aktywuję pakiet dla usera {userId}");
+                        logger.LogInformation($"Payment has been received. I am activating the package for user {userId}.");
 
                         // We close the old subscription if it exists
                         var activeSub = await context.UserSubscriptions
@@ -76,7 +76,7 @@ namespace GymCore.Api.Controllers
                         context.UserSubscriptions.Add(newSub);
                         await context.SaveChangesAsync(default);
                         
-                        logger.LogInformation("Subskrypcja pomyślnie zaktualizowana w bazie.");
+                        logger.LogInformation("Subscription successfully updated in the database.");
                     }
                     else if (session.Metadata.ContainsKey("SubscriptionId"))
                     {
@@ -88,11 +88,11 @@ namespace GymCore.Api.Controllers
                         {
                             sub.Cancel();
                             await context.SaveChangesAsync(default);
-                            logger.LogInformation($"Subskrypcja {subscriptionId} pomyślnie anulowana.");
+                            logger.LogInformation($"Subscription {subscriptionId} successfully canceled.");
                         }
                         else
                         {
-                            logger.LogError($"Nie znaleziono subskrypcji do anulowania: {subscriptionId}");
+                            logger.LogError($"No subscriptions found to cancel: {subscriptionId}.");
                         }
                     }
                     else

@@ -52,7 +52,12 @@ namespace GymCore.Application.Features.Subscriptions.Commands.BuySubscription
                         PriceData = new SessionLineItemPriceDataOptions {
                             UnitAmount = (long)(amountToPay * 100),
                             Currency = "pln",
-                            ProductData = new SessionLineItemPriceDataProductDataOptions { Name = $"GymCore {tier.Name} Upgrade" }
+                            ProductData = new SessionLineItemPriceDataProductDataOptions { 
+                                Name = activeSub != null ? $"GymCore {tier.Name} Plan Upgrade" : $"GymCore {tier.Name} Membership",
+                                Description = activeSub != null 
+                                    ? $"Upgrading to {tier.Name} for {request.Months} month(s) with credit applied from your previous plan."
+                                    : $"Membership for {request.Months} month(s) at {tier.Name} tier level."
+                            }
                         },
                         Quantity = 1,
                     },
@@ -64,7 +69,9 @@ namespace GymCore.Application.Features.Subscriptions.Commands.BuySubscription
                     { "UserId", request.UserId.ToString() },
                     { "TierId", request.TierId.ToString() },
                     { "Months", request.Months.ToString() }
-                }
+                },
+                PhoneNumberCollection = new SessionPhoneNumberCollectionOptions { Enabled = true },
+                Locale = "en"
             };
 
             return (await new SessionService().CreateAsync(options)).Url;

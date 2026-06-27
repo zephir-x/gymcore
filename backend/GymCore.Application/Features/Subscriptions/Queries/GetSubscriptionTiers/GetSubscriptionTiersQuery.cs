@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Subscriptions.Queries.GetSubscriptionTiers
 {
-    public record SubscriptionTierDto(Guid Id, string Name, decimal MonthlyPrice, decimal DiscountPercentage);
+    public record SubscriptionTierDto(Guid Id, string Name, decimal MonthlyPrice);
     
     public record GetSubscriptionTiersQuery() : IRequest<List<SubscriptionTierDto>>;
 
@@ -16,7 +16,7 @@ namespace GymCore.Application.Features.Subscriptions.Queries.GetSubscriptionTier
             return await context.SubscriptionTiers
                 .AsNoTracking()
                 .OrderBy(t => t.MonthlyPrice)
-                .Select(t => new SubscriptionTierDto(t.Id, t.Name, t.MonthlyPrice, t.DiscountPercentage))
+                .Select(t => new SubscriptionTierDto(t.Id, t.Name, t.MonthlyPrice))
                 .ToListAsync(cancellationToken);
         }
     }
