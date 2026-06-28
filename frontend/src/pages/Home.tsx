@@ -1,11 +1,31 @@
 ﻿import * as React from "react"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
+import ReactMarkdown from 'react-markdown'
 import { Link, Navigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { LogOut, Clock, ChevronRight, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation, Bell, CheckCircle2 } from "lucide-react"
+import {
+    LogOut,
+    Clock,
+    ChevronRight,
+    Users,
+    Award,
+    Activity,
+    Calendar,
+    XCircle,
+    Dumbbell,
+    MapPin,
+    Navigation,
+    Bell,
+    CheckCircle2,
+    Send,
+    Bot,
+    Sparkles,
+    Loader2,
+    UserCircle
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -16,6 +36,7 @@ interface Subscription { subscriptionId: string; tierName: string; startDate: st
 interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null; bio?: string | null }
 interface Room { id: string; name: string; maxCapacity: number; requiredTierId: string | null; requiredTierName: string | null; imageUrl?: string | null; description?: string | null }
 interface NotificationItem { id: string; title: string; message: string; isRead: boolean; createdAt: string; }
+interface ChatMessage { role: 'user' | 'assistant'; content: string; }
 
 export default function Home() {
     const { user, logout } = useAuth()
@@ -24,6 +45,14 @@ export default function Home() {
     const [selectedRoomDetails, setSelectedRoomDetails] = useState<Room | null>(null);
     const [selectedClassDetails, setSelectedClassDetails] = useState<GroupClass | null>(null);
     const [selectedCoachDetails, setSelectedCoachDetails] = useState<Coach | null>(null);
+    
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([{ role: 'assistant', content: "Hi! I'm your GymCore AI. I can check class schedules, plans, and help you navigate the gym. What's on your mind?" }])
+    const [currentInput, setCurrentInput] = useState("")
+    const [isChatOpen, setIsChatOpen] = useState(false)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }) }
+    useEffect(() => { if (isChatOpen) scrollToBottom() }, [chatMessages, isChatOpen])
 
     /* QUERIES */
     const { data: classes, isLoading: isClassesLoading } = useQuery<GroupClass[]>({
@@ -87,6 +116,32 @@ export default function Home() {
         mutationFn: async (id: string) => await api.patch(`/api/notifications/${id}/read`),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-notifications'] })
     })
+
+    const chatMutation = useMutation({
+        mutationFn: async (messagesHistory: ChatMessage[]) => {
+            const res = await api.post('/api/ai/chat', { messages: messagesHistory })
+            return res.data
+        },
+        onSuccess: (data) => {
+            setChatMessages(prev => [...prev, { role: 'assistant', content: data.Reply || data.reply }])
+        },
+        onError: () => {
+            setChatMessages(prev => [...prev, { role: 'assistant', content: "Sorry, my brain is a little disconnected right now. Try again in a minute!" }])
+        }
+    })
+
+    const handleSendMessage = (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        if (!currentInput.trim()) return
+
+        const newUserMessage: ChatMessage = { role: 'user', content: currentInput.trim() }
+        const newHistory = [...chatMessages, newUserMessage]
+
+        setChatMessages(newHistory)
+        setCurrentInput("")
+
+        chatMutation.mutate(newHistory)
+    }
 
     if (user?.role === "Coach" || user?.role === "Admin") return <Navigate to="/dashboard" replace />
 
@@ -565,8 +620,85 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="h-[120px] bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl flex items-center justify-center p-6 text-center shrink-0 w-full">
-                    <p className="text-sm text-zinc-500 font-medium">PLACEHOLDER:<br/>AI Assistant Widget</p>
+                {/* AI ASSISTANT WIDGET */}
+                <div className={`bg-zinc-900/40 border border-white/5 rounded-2xl flex flex-col shrink-0 w-full transition-all duration-500 overflow-hidden relative group ${isChatOpen ? "h-[400px] shadow-[0_0_30px_rgba(249,115,22,0.15)] border-orange-500/30" : "h-[70px] hover:bg-zinc-900/60 cursor-pointer"}`}>
+                    {/* COLLAPSED HEADER / TOGGLE */}
+                    <div
+                        onClick={() => setIsChatOpen(!isChatOpen)}
+                        className="h-[70px] w-full p-4 flex items-center justify-between shrink-0 z-10 relative cursor-pointer"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-orange-500 rounded-full blur group-hover:blur-md transition-all opacity-50 animate-pulse" />
+                                <div className="w-10 h-10 bg-zinc-950 rounded-full border border-orange-500/50 flex items-center justify-center relative z-10 text-orange-500">
+                                    <Sparkles size={18} />
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-white font-bold text-sm tracking-tight flex items-center gap-1.5">GymCore AI <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-orange-500/20 text-orange-500 uppercase tracking-wider">Beta</span></h4>
+                                <p className="text-[10px] text-zinc-400 font-medium">Ask me anything about schedules or plans.</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={18} className={`text-zinc-500 transition-transform duration-300 ${isChatOpen ? "rotate-90" : ""}`} />
+                    </div>
+
+                    {/* EXPANDED CHAT AREA */}
+                    <div className={`flex-1 flex flex-col min-h-0 bg-zinc-950/50 border-t border-white/5 transition-opacity duration-300 ${isChatOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                        {/* MESSAGES LIST */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            {chatMessages.map((msg, idx) => (
+                                <div key={idx} className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? "ml-auto flex-row-reverse" : "mr-auto"}`}>
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${msg.role === 'user' ? "bg-zinc-800 border border-white/10" : "bg-orange-500/20 border border-orange-500/30 text-orange-500"}`}>
+                                        {msg.role === 'user' ? <UserCircle size={12} /> : <Bot size={12} />}
+                                    </div>
+                                    <div className={`p-3 rounded-2xl text-xs leading-relaxed overflow-hidden ${msg.role === 'user' ? "bg-zinc-800 text-zinc-200 rounded-tr-sm" : "bg-orange-500/10 border border-orange-500/20 text-orange-100 rounded-tl-sm shadow-[0_0_15px_rgba(249,115,22,0.05)]"}`}>
+                                        {msg.role === 'user' ? (
+                                            msg.content
+                                        ) : (
+                                            <div className="[&>p]:mb-2 [&>p:last-child]:mb-0 [&_a]:text-amber-400 [&_a]:underline hover:[&_a]:text-amber-300 [&_strong]:text-white [&_strong]:font-black [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_li]:mb-1">
+                                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* TYPING INDICATOR */}
+                            {chatMutation.isPending && (
+                                <div className="flex gap-3 max-w-[85%] mr-auto">
+                                    <div className="w-6 h-6 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-500 flex items-center justify-center shrink-0 mt-0.5">
+                                        <Loader2 size={12} className="animate-spin" />
+                                    </div>
+                                    <div className="p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 rounded-tl-sm flex gap-1 items-center">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* INPUT AREA */}
+                        <form onSubmit={handleSendMessage} className="p-3 bg-zinc-950 border-t border-white/5 flex gap-2 shrink-0">
+                            <input
+                                type="text"
+                                value={currentInput}
+                                onChange={e => setCurrentInput(e.target.value)}
+                                placeholder="Type a message..."
+                                disabled={chatMutation.isPending}
+                                className="flex-1 bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-orange-500 disabled:opacity-50"
+                            />
+                            <Button
+                                type="submit"
+                                size="icon"
+                                disabled={!currentInput.trim() || chatMutation.isPending}
+                                className="h-9 w-9 shrink-0 bg-orange-600 hover:bg-orange-500 text-white rounded-xl border-none disabled:opacity-50"
+                            >
+                                <Send size={14} />
+                            </Button>
+                        </form>
+                    </div>
                 </div>
             </aside>
 
