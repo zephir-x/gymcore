@@ -9,8 +9,9 @@ namespace GymCore.Application.Features.Coaches.Queries.GetCoachAgenda
         List<AgendaClassDto> AssignedClasses, 
         List<AgendaSlotDto> TrainerSlots
     );
-
-    public record AgendaClassDto(Guid Id, string Name, DateTime StartTime, DateTime EndTime, int AttendeesCount);
+    
+    public record AgendaClassDto(Guid Id, string Name, DateTime StartTime, DateTime EndTime, int AttendeesCount, int WaitlistCount);
+    
     public record AgendaSlotDto(Guid Id, DateTime StartTime, DateTime EndTime, string Status);
 
     public record GetCoachAgendaQuery(Guid CoachId) : IRequest<AgendaDto>;
@@ -29,7 +30,8 @@ namespace GymCore.Application.Features.Coaches.Queries.GetCoachAgenda
                     c.Name, 
                     c.StartTime, 
                     c.EndTime, 
-                    c.Reservations.Count(r => r.Status == ReservationStatus.Confirmed)))
+                    c.Reservations.Count(r => r.Status == ReservationStatus.Confirmed),
+                    c.Reservations.Count(r => r.Status == ReservationStatus.Waitlist))) // Calculating the waitlist
                 .ToListAsync(cancellationToken);
 
             // We download free and occupied trainer slots

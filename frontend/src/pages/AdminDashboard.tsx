@@ -77,6 +77,7 @@ interface AdminClass {
     endTime: string
     maxAttendees: number
     currentBookings: number
+    waitlistCount: number
     isCancelled: boolean
     imageUrl?: string | null
 }
@@ -677,6 +678,7 @@ export default function AdminDashboard() {
                                                 <TableHead className="font-bold text-zinc-400">Class Name</TableHead>
                                                 <TableHead className="font-bold text-zinc-400">Time</TableHead>
                                                 <TableHead className="font-bold text-zinc-400">Coach & Room</TableHead>
+                                                <TableHead className="font-bold text-zinc-400 text-center">Enrollment</TableHead>
                                                 <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -698,6 +700,18 @@ export default function AdminDashboard() {
                                                         </TableCell>
                                                         <TableCell>
                                                             <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.coachName} • {cls.roomName}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="inline-flex items-center justify-center gap-2">
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                                    {cls.currentBookings} / {cls.maxAttendees}
+                                                                </span>
+                                                                {cls.waitlistCount > 0 && (
+                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.15)] whitespace-nowrap">
+                                                                        + {cls.waitlistCount} Waitlist
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {!cls.isCancelled && (

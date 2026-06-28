@@ -6,59 +6,57 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymCore.Application.Features.Bookings.Commands.BookClass
 {
-    public record BookClassCommand(Guid ClassId, Guid UserId) : IRequest<Guid>;
+    public record BookClassResult(Guid ReservationId, ReservationStatus Status);
 
-    public class BookClassCommandHandler(IApplicationDbContext context) : IRequestHandler<BookClassCommand, Guid>
+    public record BookClassCommand(Guid ClassId, Guid UserId) : IRequest<BookClassResult>;
+
+    public class BookClassCommandHandler(IApplicationDbContext context) : IRequestHandler<BookClassCommand, BookClassResult>
     {
-        public async Task<Guid> Handle(BookClassCommand request, CancellationToken cancellationToken)
+        public async Task<BookClassResult> Handle(BookClassCommand request, CancellationToken cancellationToken)
         {
             var groupClass = await context.GroupClasses
                 .Include(c => c.Reservations)
                 .FirstOrDefaultAsync(c => c.Id == request.ClassId, cancellationToken);
 
-            if (groupClass == null)
-                throw new Exception("Group class not found.");
+            if (groupClass == null) throw new Exception("Group class not found.");
 
-            // We download the active subscription and its package
             var activeSubscription = await context.UserSubscriptions
                 .Include(s => s.Tier)
                 .Where(s => s.UserId == request.UserId && s.EndDate >= DateTime.UtcNow && s.Status == SubscriptionStatus.Active)
                 .OrderByDescending(s => s.EndDate)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (activeSubscription == null)
-                throw new Exception("You need an active subscription to book a class.");
+            if (activeSubscription == null) throw new Exception("You need an active subscription to book a class.");
             
-            // We check if it is PRO or VIP
             var tierName = activeSubscription.Tier.Name.ToUpper();
-            if (tierName != "PRO" && tierName != "VIP")
-            {
-                throw new Exception("Group classes require a PRO or VIP membership.");
-            }
+            if (tierName != "PRO" && tierName != "VIP") throw new Exception("Group classes require a PRO or VIP membership.");
 
+            // Waitlist logic
             var currentBookingsCount = groupClass.Reservations.Count(r => r.Status == ReservationStatus.Confirmed);
-            if (currentBookingsCount >= groupClass.MaxAttendees) 
-                throw new Exception("This class is fully booked.");
+            var isFull = currentBookingsCount >= groupClass.MaxAttendees;
+            var targetStatus = isFull ? ReservationStatus.Waitlist : ReservationStatus.Confirmed;
 
             var existingReservation = groupClass.Reservations.FirstOrDefault(r => r.UserId == request.UserId);
 
             if (existingReservation != null)
             {
                 if (existingReservation.Status != ReservationStatus.Cancelled)
-                    throw new Exception("You are already booked for this class.");
+                    throw new Exception("You are already booked or waitlisted for this class.");
                 
-                existingReservation.Reactivate();
+                existingReservation.Reactivate(targetStatus);
             }
             else
             {
-                existingReservation = new ClassReservation(request.UserId, request.ClassId);
+                existingReservation = new ClassReservation(request.UserId, request.ClassId, targetStatus);
                 context.ClassReservations.Add(existingReservation);
             }
 
             try
             {
                 await context.SaveChangesAsync(cancellationToken);
-                return existingReservation.Id;
+                
+                // We return the result with status
+                return new BookClassResult(existingReservation.Id, targetStatus);
             }
             catch (DbUpdateConcurrencyException)
             {

@@ -30,16 +30,20 @@ namespace GymCore.Api.Controllers
         {
             // Securely extract the user ID directly from their JWT token to prevent impersonation
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+    
             if (!Guid.TryParse(userIdString, out var userId))
                 return Unauthorized("Invalid user token.");
 
-            // Create the command combining route data and authenticated context
             var command = new BookClassCommand(classId, userId);
             
-            var reservationId = await sender.Send(command);
+            var result = await sender.Send(command);
 
-            return Ok(new { Message = "Successfully booked the class!", ReservationId = reservationId });
+            // Dynamic status-based message
+            var message = result.Status == GymCore.Domain.Enums.ReservationStatus.Waitlist
+                ? "You have been added to the waitlist!"
+                : "Successfully booked the class!";
+
+            return Ok(new { Message = message, ReservationId = result.ReservationId });
         }
         
         // Retrieves a list of all coaches available for personal training

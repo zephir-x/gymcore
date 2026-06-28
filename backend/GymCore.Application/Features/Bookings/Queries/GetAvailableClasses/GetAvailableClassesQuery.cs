@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace GymCore.Application.Features.Bookings.Queries.GetAvailableClasses
 {
-    public record GroupClassDto(Guid Id, string Name, string CoachName, DateTime StartTime, DateTime EndTime, int MaxAttendees, int CurrentBookings, string? ImageUrl);
+    public record GroupClassDto(Guid Id, string Name, string CoachName, DateTime StartTime, DateTime EndTime, int MaxAttendees, int CurrentBookings, int WaitlistCount, string? ImageUrl);
     
     public record GetAvailableClassesQuery() : IRequest<List<GroupClassDto>>;
 
@@ -21,8 +21,16 @@ namespace GymCore.Application.Features.Bookings.Queries.GetAvailableClasses
                 .Where(c => c.StartTime >= DateTime.UtcNow && !c.IsCancelled)
                 .OrderBy(c => c.StartTime)
                 .Select(c => new GroupClassDto(
-                    c.Id, c.Name, $"{c.Coach.Details.FirstName} {c.Coach.Details.LastName}", c.StartTime, c.EndTime, c.MaxAttendees,
+                    c.Id, 
+                    c.Name, 
+                    c.Coach != null && c.Coach.Details != null 
+                        ? c.Coach.Details.FirstName + " " + c.Coach.Details.LastName 
+                        : "To be announced", 
+                    c.StartTime, 
+                    c.EndTime, 
+                    c.MaxAttendees,
                     c.Reservations.Count(r => r.Status == ReservationStatus.Confirmed),
+                    c.Reservations.Count(r => r.Status == ReservationStatus.Waitlist),
                     c.ImageUrl
                 ))
                 .ToListAsync(cancellationToken);

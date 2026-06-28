@@ -34,12 +34,12 @@ namespace GymCore.Domain.Entities
             Update();
         }
 
-        public void Reactivate()
+        public void Reactivate(ReservationStatus newStatus = ReservationStatus.Confirmed)
         {
-            if (Status == ReservationStatus.Confirmed)
-                throw new Exception("Reservation is already confirmed.");
-                
-            Status = ReservationStatus.Confirmed;
+            if (Status != ReservationStatus.Cancelled)
+                throw new Exception("Only cancelled reservations can be reactivated.");
+        
+            Status = newStatus;
             Update(); 
         }
         

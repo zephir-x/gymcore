@@ -1,4 +1,5 @@
 ﻿using GymCore.Application.Common.Interfaces;
+using GymCore.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,8 +23,33 @@ namespace GymCore.Application.Features.Bookings.Commands.CancelReservation
                     throw new Exception("You are not authorized to cancel this reservation.");
 
                 classReservation.Cancel();
+
+                // Auto-promote from waitlist
+                var groupClass = await context.GroupClasses
+                    .Include(c => c.Reservations)
+                    .FirstOrDefaultAsync(c => c.Id == classReservation.GroupClassId, cancellationToken);
+
+                if (groupClass != null)
+                {
+                    var confirmedCount = groupClass.Reservations.Count(r => r.Status == ReservationStatus.Confirmed);
+        
+                    // If a spot has become available and we have someone on the waiting list
+                    if (confirmedCount < groupClass.MaxAttendees)
+                    {
+                        var nextInLine = groupClass.Reservations
+                            .Where(r => r.Status == ReservationStatus.Waitlist)
+                            .OrderBy(r => r.CreatedAt) // First come first served
+                            .FirstOrDefault();
+
+                        if (nextInLine != null)
+                        {
+                            nextInLine.PromoteFromWaitlist();
+                        }
+                    }
+                }
+
                 await context.SaveChangesAsync(cancellationToken);
-                return; // Finish successfully
+                return;
             }
 
             // If not group, we check if it is personal training (Slot)

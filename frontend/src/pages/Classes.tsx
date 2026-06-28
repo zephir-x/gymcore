@@ -7,8 +7,8 @@ import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, CheckCircle2 } from 
 import { Button } from "@/components/ui/button"
 
 /* INTERFACES */
-interface GroupClass { id: string; name: string; coachName: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null; }
-interface Reservation { reservationId: string; targetId: string; type: string }
+interface GroupClass { id: string; name: string; coachName: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; waitlistCount: number; imageUrl?: string | null; }
+interface Reservation { reservationId: string; targetId: string; type: string; status: string; }
 interface Subscription { subscriptionId: string; tierName: string; }
 
 /* COMPONENT */
@@ -50,7 +50,7 @@ export default function Classes() {
     const bookMutation = useMutation({
         mutationFn: async (classId: string) => { const res = await api.post(`/api/bookings/classes/${classId}`); return res.data },
         onSuccess: async (data) => {
-            toast.success("Spot Secured!", { description: data.Message || "You have successfully booked the class." })
+            toast.success("Action Successful", { description: data.message || data.Message || "You have successfully updated your reservation." })
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ['classes'] }),
                 queryClient.invalidateQueries({ queryKey: ['my-reservations'] })
@@ -126,7 +126,9 @@ export default function Classes() {
                         filteredClasses.map((cls) => {
                             const isFull = cls.currentBookings >= cls.maxAttendees
                             const spotsLeft = cls.maxAttendees - cls.currentBookings
-                            const isBooked = reservations?.some(r => r.targetId === cls.id && r.type === "Group")
+                            const myReservation = reservations?.find(r => r.targetId === cls.id && r.type === "Group")
+                            const isBooked = myReservation?.status === "Confirmed"
+                            const isWaitlisted = myReservation?.status === "Waitlist"
 
                             return (
                                 <div key={cls.id} className="flex gap-4 md:gap-6 items-start md:items-center group">
@@ -134,8 +136,8 @@ export default function Classes() {
                                         <span className="text-base md:text-lg font-black text-white group-hover:text-orange-500 transition-colors">{formatTime(cls.startTime)}</span>
                                         <span className="text-[9px] md:text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Start</span>
                                     </div>
-
-                                    <div className={`flex-1 min-w-0 bg-zinc-900/40 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 rounded-2xl p-4 md:p-5 flex flex-col xl:flex-row justify-between xl:items-center gap-4 transition-all duration-300 relative overflow-hidden ${isFull && !isBooked ? "opacity-60" : ""}`}>
+                                    
+                                    <div className={`flex-1 min-w-0 bg-zinc-900/40 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 rounded-2xl p-4 md:p-5 flex flex-col xl:flex-row justify-between xl:items-center gap-4 transition-all duration-300 relative overflow-hidden`}>
                                         {cls.imageUrl && (
                                             <>
                                                 <img
@@ -156,7 +158,14 @@ export default function Classes() {
                                                 </div>
                                                 <div className="flex items-center bg-zinc-950 px-2 py-1.5 rounded-lg border border-white/5 shrink-0">
                                                     <Users size={12} className="mr-1.5 text-orange-500" />
-                                                    {isFull ? <span className="text-red-400 font-bold">Full ({cls.maxAttendees}/{cls.maxAttendees})</span> : <span>{spotsLeft} Spots Left</span>}
+                                                    {isFull ? (
+                                                        <span className="flex items-center gap-1">
+                                                            <span className="text-red-400 font-bold">Full ({cls.maxAttendees}/{cls.maxAttendees})</span>
+                                                            {cls.waitlistCount > 0 && <span className="text-amber-500 font-bold ml-1">• {cls.waitlistCount} in Waitlist</span>}
+                                                        </span>
+                                                    ) : (
+                                                        <span>{spotsLeft} Spots Left</span>
+                                                    )}
                                                 </div>
 
                                                 {!hasProOrVip && (
@@ -170,20 +179,22 @@ export default function Classes() {
                                         <div className="w-full xl:w-auto shrink-0 mt-2 xl:mt-0 relative z-10">
                                             <Button
                                                 onClick={() => bookMutation.mutate(cls.id)}
-                                                disabled={!subscription || !hasProOrVip || isFull || isBooked || bookMutation.isPending}
+                                                disabled={!subscription || !hasProOrVip || isBooked || isWaitlisted || bookMutation.isPending}
                                                 className={`w-full xl:w-[140px] h-10 md:h-11 font-bold border-none transition-all duration-300 shadow-md ${
                                                     !subscription ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
                                                         !hasProOrVip ? "bg-zinc-800 text-orange-400 border border-orange-500/20 cursor-not-allowed" :
                                                             isBooked ? "bg-zinc-800 text-green-400 border border-green-500/20 cursor-not-allowed flex items-center justify-center gap-2" :
-                                                                isFull ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" :
-                                                                    "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                                                                isWaitlisted ? "bg-zinc-800 text-amber-500 border border-amber-500/30 cursor-not-allowed flex items-center justify-center gap-2" :
+                                                                    isFull ? "bg-zinc-950 text-amber-500 border border-amber-500/30 hover:bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.1)]" :
+                                                                        "bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white shadow-[0_0_15px_rgba(249,115,22,0.15)]"
                                                 }`}
                                             >
                                                 {bookMutation.isPending ? "Processing..." :
                                                     !subscription ? "Requires Plan" :
                                                         !hasProOrVip ? "Upgrade to PRO" :
                                                             isBooked ? <><CheckCircle2 size={16} /> Booked</> :
-                                                                isFull ? "Full" : "Book Class"}
+                                                                isWaitlisted ? <><Clock size={16} /> Waiting</> :
+                                                                    isFull ? "Join Waitlist" : "Book Class"}
                                             </Button>
                                         </div>
                                     </div>

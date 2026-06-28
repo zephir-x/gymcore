@@ -69,6 +69,9 @@ builder.Services.AddOpenApi();
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"] ?? throw new InvalidOperationException("Stripe:SecretKey is missing in configuration");
 builder.Services.AddScoped<GymCore.Application.Common.Services.StripePaymentService>();
 
+// Registration for GuardWorker who looks for status modyfications
+builder.Services.AddHostedService<GymCore.Api.Workers.GuardWorker>();
+
 var app = builder.Build();
 
 // Seeding the database

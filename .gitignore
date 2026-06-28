@@ -3,5 +3,6 @@
 *.sln.DotSettings.user
 [Bb]in/
 [Oo]bj/
+assets/todo.txt
 assets/commands.txt
 appsettings.Development.json

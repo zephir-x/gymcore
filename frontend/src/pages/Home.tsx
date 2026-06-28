@@ -418,6 +418,7 @@ export default function Home() {
                                 <div className="relative border-l-2 border-zinc-900 ml-3.5 pl-6 space-y-6">
                                     {upcomingBookings.map((booking) => {
                                         const isGroup = booking.type === "Group"
+                                        const isWaitlisted = booking.status === "Waitlist"
                                         return (
                                             <div key={booking.reservationId} className="relative group/item animate-in fade-in slide-in-from-right-4 duration-300">
                                                 {/* TIMELINE PIN POINT */}
@@ -427,8 +428,8 @@ export default function Home() {
                                                 <div className="bg-zinc-900/30 border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 p-4 rounded-xl transition-all duration-300 relative overflow-hidden flex flex-col justify-between gap-3">
                                                     <div>
                                                         <div className="flex items-center justify-between gap-2 mb-1.5">
-                                                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${isGroup ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-                                                                {isGroup ? 'Group Class' : '1:1 Session'}
+                                                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${isWaitlisted ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : isGroup ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
+                                                                {isWaitlisted ? 'WAITLIST (Pending)' : isGroup ? 'Group Class' : '1:1 Session'}
                                                             </span>
                                                             <span className="text-[10px] font-bold text-zinc-500">
                                                                 {formatDate(booking.startTime)}

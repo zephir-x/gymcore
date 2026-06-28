@@ -40,7 +40,7 @@ const PRESET_AVATARS = [
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=d946ef"
 ]
 
-interface AgendaClass { id: string; name: string; startTime: string; endTime: string; attendeesCount: number }
+interface AgendaClass { id: string; name: string; startTime: string; endTime: string; attendeesCount: number; waitlistCount: number }
 interface AgendaSlot { id: string; startTime: string; endTime: string; status: string }
 interface CoachAgenda { assignedClasses: AgendaClass[]; trainerSlots: AgendaSlot[] }
 
@@ -227,8 +227,15 @@ export default function TrainerDashboard() {
                                                         {formatDateTime(cls.startTime)} <ArrowRight size={10} className="mx-1" /> {formatDateTime(cls.endTime).split(', ')[1]}
                                                     </div>
                                                 </div>
-                                                <div className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
-                                                    {cls.attendeesCount} Enrolled
+                                                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                                    <div className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 text-center w-full">
+                                                        {cls.attendeesCount} Enrolled
+                                                    </div>
+                                                    {cls.waitlistCount > 0 && (
+                                                        <div className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.15)] flex items-center justify-center w-full">
+                                                            + {cls.waitlistCount} Waiting
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
