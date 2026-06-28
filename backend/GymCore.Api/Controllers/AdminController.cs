@@ -77,7 +77,7 @@ namespace GymCore.Api.Controllers
             return Ok(new { Message = "User status toggled successfully." });
         }
 
-        // 3. Schedule management
+        // Schedule management
 
         [HttpPost("classes")]
         public async Task<IActionResult> CreateGroupClass([FromBody] CreateGroupClassCommand command)
@@ -100,11 +100,20 @@ namespace GymCore.Api.Controllers
             return Ok(new { Message = "Class deleted successfully." });
         }
         
+        // Statistics & Notifications
+        
         [HttpGet("statistics")]
         public async Task<IActionResult> GetStatistics()
         {
             var stats = await sender.Send(new Application.Features.Admin.Queries.GetDashboardStats.GetDashboardStatsQuery());
             return Ok(stats);
+        }
+        
+        [HttpPost("notifications/broadcast")]
+        public async Task<IActionResult> BroadcastMessage([FromBody] GymCore.Application.Features.Admin.Commands.BroadcastMessage.BroadcastMessageCommand command)
+        {
+            await sender.Send(command);
+            return Ok(new { Message = "Global announcement broadcasted successfully." });
         }
     }
 }

@@ -5,8 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import { LogOut, Clock, ChevronRight, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation } from "lucide-react"
-
+import { LogOut, Clock, ChevronRight, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation, Bell, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -16,6 +15,7 @@ interface Reservation { reservationId: string; targetId: string | null; title: s
 interface Subscription { subscriptionId: string; tierName: string; startDate: string; endDate: string; status: string; }
 interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null; bio?: string | null }
 interface Room { id: string; name: string; maxCapacity: number; requiredTierId: string | null; requiredTierName: string | null; imageUrl?: string | null; description?: string | null }
+interface NotificationItem { id: string; title: string; message: string; isRead: boolean; createdAt: string; }
 
 export default function Home() {
     const { user, logout } = useAuth()
@@ -59,6 +59,11 @@ export default function Home() {
         queryFn: async () => { const res = await api.get('/api/users/me/profile'); return res.data }
     })
 
+    const { data: notifications } = useQuery<NotificationItem[]>({
+        queryKey: ['my-notifications'],
+        queryFn: async () => { const res = await api.get('/api/notifications/my-notifications'); return res.data }
+    })
+
     /* MUTATIONS */
     const cancelReservationMutation = useMutation({
         mutationFn: async (reservationId: string) => {
@@ -76,6 +81,11 @@ export default function Home() {
             console.error("Cancellation Error:", error)
             toast.error("Action Failed", { description: "Could not cancel this reservation. Please try again later." })
         }
+    })
+
+    const markAsReadMutation = useMutation({
+        mutationFn: async (id: string) => await api.patch(`/api/notifications/${id}/read`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-notifications'] })
     })
 
     if (user?.role === "Coach" || user?.role === "Admin") return <Navigate to="/dashboard" replace />
@@ -162,9 +172,47 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* MESSAGES */}
-                <div className="flex-1 bg-zinc-900/20 border border-dashed border-zinc-800 rounded-2xl mb-6 flex flex-col items-center justify-center p-4 text-center min-h-0 w-full">
-                    <p className="text-sm text-zinc-500 font-medium">PLACEHOLDER:<br/>Messages List</p>
+                {/* NOTIFICATIONS HUB */}
+                <div className="flex-1 flex flex-col min-h-0 w-full mb-6 bg-zinc-900/20 border border-white/5 rounded-2xl p-4 overflow-hidden">
+                    <div className="flex items-center justify-between mb-3 shrink-0">
+                        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <Bell size={14} className={notifications?.some(n => !n.isRead) ? "text-orange-500" : "text-zinc-500"} />
+                            Inbox
+                        </h3>
+                        {notifications?.some(n => !n.isRead) && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-500/20 text-orange-500">NEW</span>
+                        )}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative">
+                        {notifications && notifications.length > 0 ? (
+                            notifications.map(n => (
+                                <div key={n.id} className={`p-3 rounded-xl border text-left flex flex-col gap-1.5 transition-all relative group ${n.isRead ? 'bg-zinc-950/50 border-white/5' : 'bg-zinc-900/60 border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.05)]'}`}>
+                                    <div className="flex justify-between items-start gap-2">
+                                        <h4 className={`text-xs font-bold ${n.isRead ? 'text-zinc-300' : 'text-orange-400'}`}>{n.title}</h4>
+                                        {!n.isRead && (
+                                            <button
+                                                onClick={() => markAsReadMutation.mutate(n.id)}
+                                                disabled={markAsReadMutation.isPending}
+                                                className="text-zinc-500 hover:text-green-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Mark as read"
+                                            >
+                                                <CheckCircle2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className={`text-[11px] leading-relaxed ${n.isRead ? 'text-zinc-500' : 'text-zinc-300'}`}>{n.message}</p>
+                                    <span className="text-[9px] font-bold text-zinc-600 mt-1">{formatDate(n.createdAt)}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+                                <Bell size={24} className="text-zinc-600 mb-2" />
+                                <p className="text-xs text-zinc-500 font-medium">You're all caught up!</p>
+                            </div>
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#141417] to-transparent pointer-events-none" />
+                    </div>
                 </div>
 
                 {/* LOGOUT */}
@@ -604,7 +652,6 @@ export default function Home() {
                     </div>
                 </DialogContent>
             </Dialog>
-
         </div>
     )
 }

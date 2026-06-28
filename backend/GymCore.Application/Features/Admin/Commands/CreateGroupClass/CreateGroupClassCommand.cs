@@ -51,6 +51,14 @@ namespace GymCore.Application.Features.Admin.Commands.CreateGroupClass
             );
 
             context.GroupClasses.Add(groupClass);
+            
+            var notification = new Notification(
+                request.CoachId,
+                "New Class Assignment",
+                $"You have been scheduled to lead '{request.Name}' in {room.Name} on {request.StartTime:MMM dd, yyyy HH:mm}."
+            );
+            context.Notifications.Add(notification);
+            
             await context.SaveChangesAsync(cancellationToken);
 
             return groupClass.Id;

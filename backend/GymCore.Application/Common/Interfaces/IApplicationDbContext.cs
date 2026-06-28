@@ -13,6 +13,7 @@ namespace GymCore.Application.Common.Interfaces
         DbSet<GroupClass> GroupClasses { get; }
         DbSet<ClassReservation> ClassReservations { get; }
         DbSet<TrainerSlot> TrainerSlots { get; }
+        DbSet<Notification> Notifications { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     }

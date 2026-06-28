@@ -16,6 +16,7 @@ namespace GymCore.Infrastructure.Data
         public DbSet<GroupClass> GroupClasses { get; set; }
         public DbSet<ClassReservation> ClassReservations { get; set; }
         public DbSet<TrainerSlot> TrainerSlots { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

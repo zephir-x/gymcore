@@ -27,6 +27,13 @@ namespace GymCore.Api.Workers
                     foreach (var sub in expiredSubscriptions)
                     {
                         sub.Expire();
+                        
+                        context.Notifications.Add(new GymCore.Domain.Entities.Notification(
+                            sub.UserId,
+                            "Subscription Expired",
+                            "Your GymCore subscription has ended. Renew your plan today to keep booking classes and personal training sessions!"
+                        ));
+                        
                         logger.LogInformation($"Subscription {sub.Id} for user {sub.UserId} has been expired.");
                     }
 
@@ -38,6 +45,16 @@ namespace GymCore.Api.Workers
                     foreach (var slot in completedSlots)
                     {
                         slot.MarkAsCompleted();
+                        
+                        if (slot.ClientId.HasValue)
+                        {
+                            context.Notifications.Add(new GymCore.Domain.Entities.Notification(
+                                slot.ClientId.Value,
+                                "Workout Completed",
+                                "Great job on your 1:1 training session today! Keep up the good work and book your next session soon."
+                            ));
+                        }
+                        
                         logger.LogInformation($"Session 1:1 (Slot {slot.Id}) has been marked as completed.");
                     }
 

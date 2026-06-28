@@ -1,4 +1,5 @@
 ﻿using GymCore.Application.Common.Interfaces;
+using GymCore.Domain.Entities;
 using GymCore.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,14 @@ namespace GymCore.Application.Features.Bookings.Commands.CancelReservation
                         if (nextInLine != null)
                         {
                             nextInLine.PromoteFromWaitlist();
+            
+                            // We are sending a notification to member
+                            var notification = new Notification(
+                                nextInLine.UserId,
+                                "Waitlist Update: Spot Secured!",
+                                $"A spot opened up for {groupClass.Name} and you have been automatically moved from the waitlist to the confirmed list."
+                            );
+                            context.Notifications.Add(notification);
                         }
                     }
                 }
@@ -62,6 +71,15 @@ namespace GymCore.Application.Features.Bookings.Commands.CancelReservation
                     throw new Exception("You are not authorized to cancel this session.");
 
                 trainerSlot.Release();
+                
+                // We are sending a notification to coach
+                var notification = new GymCore.Domain.Entities.Notification(
+                    trainerSlot.CoachId,
+                    "1:1 Session Cancelled",
+                    $"A client has just cancelled their personal training session on {trainerSlot.StartTime:MMM dd, yyyy HH:mm}. The slot is now open for booking again."
+                );
+                context.Notifications.Add(notification);
+                
                 await context.SaveChangesAsync(cancellationToken);
                 return;
             }

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert, ImageIcon } from 'lucide-react'
+import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert, ImageIcon, Megaphone } from 'lucide-react'
 
 import {
     Dialog,
@@ -131,6 +131,11 @@ export default function AdminDashboard() {
     const [classEndTime, setClassEndTime] = React.useState("")
     const [classMaxAttendees, setClassMaxAttendees] = React.useState("")
 
+    // BROADCAST STATES
+    const [isBroadcastModalOpen, setIsBroadcastModalOpen] = React.useState(false)
+    const [broadcastTitle, setBroadcastTitle] = React.useState("")
+    const [broadcastMessage, setBroadcastMessage] = React.useState("")
+    
     // QUERIES
     const { data: rooms, isLoading: isRoomsLoading } = useQuery<Room[]>({
         queryKey: ['admin-rooms'],
@@ -303,6 +308,31 @@ export default function AdminDashboard() {
         }
     })
 
+    // NOTIFICATION MUTATIONS
+    const broadcastMutation = useMutation({
+        mutationFn: async () => {
+            return await api.post('/api/admin/notifications/broadcast', {
+                title: broadcastTitle,
+                message: broadcastMessage
+            })
+        },
+        onSuccess: async () => {
+            toast.success("Broadcast Sent", { description: "The message has been sent to all active users." })
+            setIsBroadcastModalOpen(false)
+            setBroadcastTitle("")
+            setBroadcastMessage("")
+        },
+        onError: (error: any) => {
+            console.error(error)
+            toast.error("Broadcast Failed", { description: "Could not send the message. Please check the inputs." })
+        }
+    })
+
+    const handleSendBroadcast = (e: React.SyntheticEvent) => {
+        e.preventDefault()
+        broadcastMutation.mutate()
+    }
+
     // HANDLERS
     const handleOpenCreateModal = () => {
         resetRoomForm()
@@ -365,9 +395,18 @@ export default function AdminDashboard() {
                             <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Manage infrastructure, schedule, and system users</p>
                         </div>
                     </div>
-                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
-                        <LogOut size={18} className="mr-2" /> Log out
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsBroadcastModalOpen(true)}
+                            className="bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-400 font-bold transition-all shadow-[0_0_10px_rgba(245,158,11,0.1)]"
+                        >
+                            <Megaphone size={16} className="mr-2" /> Broadcast
+                        </Button>
+                        <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
+                            <LogOut size={18} className="mr-2" /> Log out
+                        </Button>
+                    </div>
                 </div>
 
                 <Tabs defaultValue="statistics" className="w-full flex flex-col gap-8">
@@ -708,7 +747,7 @@ export default function AdminDashboard() {
                                                                 </span>
                                                                 {cls.waitlistCount > 0 && (
                                                                     <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.15)] whitespace-nowrap">
-                                                                        + {cls.waitlistCount} Waitlist
+                                                                        + {cls.waitlistCount}
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -907,6 +946,58 @@ export default function AdminDashboard() {
 
                         <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold border-none mt-2" disabled={createClassMutation.isPending}>
                             {createClassMutation.isPending ? "Scheduling..." : "Add to Calendar"}
+                        </Button>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* BROADCAST MODAL */}
+            <Dialog open={isBroadcastModalOpen} onOpenChange={setIsBroadcastModalOpen}>
+                <DialogContent className="sm:max-w-[500px] bg-zinc-950 border border-amber-500/20 text-zinc-100 shadow-[0_0_50px_rgba(245,158,11,0.1)]">
+                    <DialogHeader>
+                        <DialogTitle className="text-white flex items-center gap-2">
+                            <Megaphone className="text-amber-500" size={20} />
+                            Send Global Announcement
+                        </DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            This message will be pushed to the personal inbox of <strong className="text-amber-500">all active Members and Trainers</strong>.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSendBroadcast} className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="broadcastTitle" className="text-zinc-300">Message Title</Label>
+                            <Input
+                                id="broadcastTitle"
+                                value={broadcastTitle}
+                                onChange={(e) => setBroadcastTitle(e.target.value)}
+                                required
+                                maxLength={100}
+                                placeholder="e.g. Holiday Opening Hours"
+                                className="bg-zinc-900 border-white/10 text-white focus-visible:ring-amber-500"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="broadcastMessage" className="text-zinc-300">Message Content</Label>
+                            <textarea
+                                id="broadcastMessage"
+                                className="flex w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 min-h-[120px]"
+                                placeholder="Write your announcement here..."
+                                value={broadcastMessage}
+                                onChange={(e) => setBroadcastMessage(e.target.value)}
+                                required
+                                maxLength={1000}
+                            />
+                            <div className="text-right text-[10px] text-zinc-500">
+                                {broadcastMessage.length} / 1000 characters
+                            </div>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold border-none mt-2"
+                            disabled={broadcastMutation.isPending}
+                        >
+                            {broadcastMutation.isPending ? "Sending..." : "Send Announcement"}
                         </Button>
                     </form>
                 </DialogContent>

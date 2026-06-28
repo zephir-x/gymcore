@@ -23,7 +23,7 @@ namespace GymCore.Application.Features.Coaches.Queries.GetCoachAgenda
             // We are downloading upcoming group classes with this trainer
             var classes = await context.GroupClasses
                 .AsNoTracking()
-                .Where(c => c.CoachId == request.CoachId && c.StartTime > DateTime.UtcNow)
+                .Where(c => c.CoachId == request.CoachId && c.StartTime > DateTime.UtcNow && !c.IsCancelled)
                 .OrderBy(c => c.StartTime)
                 .Select(c => new AgendaClassDto(
                     c.Id, 

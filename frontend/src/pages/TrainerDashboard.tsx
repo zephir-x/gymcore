@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
-import { LogOut, CalendarPlus, Clock, Users, ShieldAlert, ArrowRight, UserCircle, Settings } from "lucide-react"
+import { LogOut, CalendarPlus, Clock, Users, ShieldAlert, ArrowRight, UserCircle, Settings, Bell, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,10 +43,8 @@ const PRESET_AVATARS = [
 interface AgendaClass { id: string; name: string; startTime: string; endTime: string; attendeesCount: number; waitlistCount: number }
 interface AgendaSlot { id: string; startTime: string; endTime: string; status: string }
 interface CoachAgenda { assignedClasses: AgendaClass[]; trainerSlots: AgendaSlot[] }
-
-interface MyProfile {
-    id: string; email: string; firstName: string; lastName: string; avatarUrl: string | null; bio: string | null;
-}
+interface MyProfile { id: string; email: string; firstName: string; lastName: string; avatarUrl: string | null; bio: string | null; }
+interface NotificationItem { id: string; title: string; message: string; isRead: boolean; createdAt: string; }
 
 export default function TrainerDashboard() {
     const { user, logout } = useAuth()
@@ -55,7 +53,8 @@ export default function TrainerDashboard() {
     const [startTime, setStartTime] = useState("")
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
     const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "", bio: "", avatarUrl: "", email: "", currentPassword: "", newPassword: "" })
-
+    const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false)
+    
     const { data: agenda, isLoading } = useQuery<CoachAgenda>({
         queryKey: ['coach-agenda'],
         queryFn: async () => (await api.get('/api/coaches/agenda')).data
@@ -64,6 +63,11 @@ export default function TrainerDashboard() {
     const { data: profile } = useQuery<MyProfile>({
         queryKey: ['my-profile'],
         queryFn: async () => (await api.get('/api/users/me/profile')).data
+    })
+
+    const { data: notifications } = useQuery<NotificationItem[]>({
+        queryKey: ['my-notifications'],
+        queryFn: async () => { const res = await api.get('/api/notifications/my-notifications'); return res.data }
     })
 
     // SYNC PROFILE DATA INTO FORM STATE WHEN MODAL OPENS
@@ -116,6 +120,11 @@ export default function TrainerDashboard() {
         }
     })
 
+    const markAsReadMutation = useMutation({
+        mutationFn: async (id: string) => await api.patch(`/api/notifications/${id}/read`),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-notifications'] })
+    })
+
     const formatDateTime = (dateString: string) => new Date(dateString).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
     return (
@@ -135,9 +144,24 @@ export default function TrainerDashboard() {
                             <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Welcome to your workspace, <span className="text-orange-400">{profile?.firstName || user?.firstName}</span>!</p>
                         </div>
                     </div>
-                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors mr-2">
-                        <LogOut size={18} className="mr-2" /> Log out
-                    </Button>
+                    <div className="flex items-center gap-2 mr-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setIsNotificationsModalOpen(true)}
+                            className="text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors rounded-xl"
+                        >
+                            <div className="relative">
+                                <Bell size={20} />
+                                {notifications?.some(n => !n.isRead) && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full border border-zinc-950 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></span>
+                                )}
+                            </div>
+                        </Button>
+                        <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
+                            <LogOut size={18} className="mr-2" /> Log out
+                        </Button>
+                    </div>
                 </div>
 
                 {/* FLAT GRID FOR PERFECT ALIGNMENT */}
@@ -346,6 +370,49 @@ export default function TrainerDashboard() {
                     </Card>
                 </div>
             </div>
+
+            {/* NOTIFICATIONS MODAL */}
+            <Dialog open={isNotificationsModalOpen} onOpenChange={setIsNotificationsModalOpen}>
+                <DialogContent className="sm:max-w-[450px] bg-zinc-950 border border-white/10 text-zinc-100 max-h-[80vh] flex flex-col overflow-hidden p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <DialogHeader className="p-6 pb-4 border-b border-white/5 shrink-0">
+                        <DialogTitle className="text-white flex items-center gap-2">
+                            <Bell className="text-orange-500" size={20} />
+                            Inbox
+                        </DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Updates regarding your classes, slots, and gym announcements.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative">
+                        {notifications && notifications.length > 0 ? (
+                            notifications.map(n => (
+                                <div key={n.id} className={`p-4 rounded-xl border text-left flex flex-col gap-2 transition-all group ${n.isRead ? 'bg-zinc-900/30 border-white/5' : 'bg-zinc-900/80 border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.1)]'}`}>
+                                    <div className="flex justify-between items-start gap-2">
+                                        <h4 className={`text-sm font-bold ${n.isRead ? 'text-zinc-300' : 'text-orange-400'}`}>{n.title}</h4>
+                                        {!n.isRead && (
+                                            <button
+                                                onClick={() => markAsReadMutation.mutate(n.id)}
+                                                disabled={markAsReadMutation.isPending}
+                                                className="text-zinc-500 hover:text-green-400 shrink-0 transition-colors"
+                                                title="Mark as read"
+                                            >
+                                                <CheckCircle2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className={`text-xs leading-relaxed ${n.isRead ? 'text-zinc-500' : 'text-zinc-300'}`}>{n.message}</p>
+                                    <span className="text-[10px] font-bold text-zinc-600 mt-1">{formatDateTime(n.createdAt)}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center text-center py-10 opacity-50">
+                                <Bell size={32} className="text-zinc-600 mb-3" />
+                                <p className="text-sm text-zinc-500 font-medium">You're all caught up!</p>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
