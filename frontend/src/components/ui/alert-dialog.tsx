@@ -27,41 +27,42 @@ function AlertDialogPortal({
 }
 
 function AlertDialogOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
+                              className,
+                              ...props
+                            }: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
   return (
-    <AlertDialogPrimitive.Overlay
-      data-slot="alert-dialog-overlay"
-      className={cn(
-          "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
-          className
-      )}
-      {...props}
-    />
+      <AlertDialogPrimitive.Overlay
+          data-slot="alert-dialog-overlay"
+          className={cn(
+              "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm duration-500 ease-out data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+              className
+          )}
+          {...props}
+      />
   )
 }
 
 function AlertDialogContent({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
+                              className,
+                              size = "default",
+                              ...props
+                            }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
 }) {
   return (
-    <AlertDialogPortal>
-      <AlertDialogOverlay />
-      <AlertDialogPrimitive.Content
-        data-slot="alert-dialog-content"
-        data-size={size}
-        className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground border border-zinc-800 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className
-        )}
-        {...props}
-      />
-    </AlertDialogPortal>
+      <AlertDialogPortal>
+        <AlertDialogOverlay />
+        <AlertDialogPrimitive.Content
+            data-slot="alert-dialog-content"
+            data-size={size}
+            className={cn(
+                "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground border border-zinc-800 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm",
+                "duration-500 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-75 data-open:slide-in-from-left-1/2 data-open:slide-in-from-bottom-[30%] data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-75 data-closed:slide-out-to-left-1/2 data-closed:slide-out-to-bottom-[30%]",
+                className
+            )}
+            {...props}
+        />
+      </AlertDialogPortal>
   )
 }
 

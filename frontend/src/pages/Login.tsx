@@ -60,7 +60,7 @@ export default function Login() {
             <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
 
             {/* GLOSSY GLASS CARD */}
-            <Card className="relative z-10 w-full max-w-[420px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 
+            <Card className="animate-in fade-in slide-in-from-left-8 duration-700 ease-out relative z-10 w-full max-w-[420px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 
             bg-zinc-900/30 backdrop-blur-2xl bg-gradient-to-br from-white/10 via-transparent to-black/40 text-zinc-100 before:absolute before:inset-0 before:rounded-xl 
             before:border before:border-white/20 before:border-b-white/5 before:border-r-white/5 before:pointer-events-none">
 

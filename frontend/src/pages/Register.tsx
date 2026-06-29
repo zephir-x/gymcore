@@ -78,7 +78,7 @@ export default function Register() {
             <div className="fixed bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
 
             {/* GLOSSY GLASS CARD */}
-            <Card className="relative z-10 w-full max-w-[420px] my-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 bg-zinc-900/30 backdrop-blur-2xl bg-gradient-to-br from-white/10 via-transparent to-black/40 text-zinc-100 before:absolute before:inset-0 before:rounded-xl before:border before:border-white/20 before:border-b-white/5 before:border-r-white/5 before:pointer-events-none">
+            <Card className="animate-in fade-in slide-in-from-right-8 duration-700 ease-out relative z-10 w-full max-w-[420px] my-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border-none outline-none ring-0 ring-offset-0 bg-zinc-900/30 backdrop-blur-2xl bg-gradient-to-br from-white/10 via-transparent to-black/40 text-zinc-100 before:absolute before:inset-0 before:rounded-xl before:border before:border-white/20 before:border-b-white/5 before:border-r-white/5 before:pointer-events-none">
                 <CardHeader className="space-y-1 text-center pb-6 pt-10 px-8">
                     <div className="flex justify-center mb-4">
                         <h1 className="text-4xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">

@@ -1,6 +1,7 @@
 ﻿import * as React from "react"
 import { useState, useRef, useEffect } from "react"
 import ReactMarkdown from 'react-markdown'
+import QRCode from "react-qr-code"
 import { Link, Navigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
@@ -24,6 +25,7 @@ import {
     Bot,
     Sparkles,
     Loader2,
+    QrCode,
     UserCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -50,6 +52,8 @@ export default function Home() {
     const [currentInput, setCurrentInput] = useState("")
     const [isChatOpen, setIsChatOpen] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false)
+    const [isQrFlipped, setIsQrFormFlipped] = useState(false)
 
     const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }) }
     useEffect(() => { if (isChatOpen) scrollToBottom() }, [chatMessages, isChatOpen])
@@ -227,6 +231,17 @@ export default function Home() {
                     </div>
                 </div>
 
+                {/* QR CODE */}
+                <Button
+                    onClick={() => setIsQrModalOpen(true)}
+                    className="w-full mb-4 h-11 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:border-orange-500/30 text-zinc-300 hover:text-orange-500 transition-all duration-300 font-bold flex items-center justify-center shrink-0 group relative overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+
+                    <QrCode size={18} className="mr-2 group-hover:scale-110 transition-transform" />
+                    Digital Access Pass
+                </Button>
+                
                 {/* NOTIFICATIONS HUB */}
                 <div className="flex-1 flex flex-col min-h-0 w-full mb-6 bg-zinc-900/20 border border-white/5 rounded-2xl p-4 overflow-hidden">
                     <div className="flex items-center justify-between mb-3 shrink-0">
@@ -782,6 +797,81 @@ export default function Home() {
                             <Button className="w-full font-bold h-10 border-none transition-all duration-300 shadow-md bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white">View Schedule</Button>
                         </Link>
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* DIGITAL ACCESS PASS MODAL (DOUBLE EASTER EGG) */}
+            <Dialog open={isQrModalOpen} onOpenChange={(open) => {
+                setIsQrModalOpen(open);
+                if (!open) setIsQrFormFlipped(false);
+            }}>
+                <DialogContent className="sm:max-w-[350px] p-6 bg-zinc-950 border border-white/10 overflow-hidden flex flex-col items-center text-center">
+                    <div className="absolute top-[-20%] left-[-20%] w-[250px] h-[250px] bg-orange-600/20 rounded-full blur-[80px] pointer-events-none" />
+
+                    <div className="p-3 bg-orange-500/10 rounded-full mb-4 border border-orange-500/20">
+                        <QrCode size={24} className="text-orange-500" />
+                    </div>
+
+                    <h2 className="text-2xl font-black text-white tracking-tight mb-1">
+                        {isQrFlipped ? "Portfolio Pass" : "Entry Pass"}
+                    </h2>
+                    <p className="text-xs text-zinc-400 font-medium mb-8">
+                        {isQrFlipped ? "Scan to view developer's full portfolio." : "Scan this code at the reception turnstile."}
+                    </p>
+
+                    {/* PERSPECTIVE WRAPPER */}
+                    <div
+                        className="w-[212px] h-[212px] mb-6 [perspective:1000px] cursor-pointer"
+                        onClick={() => setIsQrFormFlipped(!isQrFlipped)}
+                    >
+                        {/* CARD FLIP CONTAINER */}
+                        <div className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] ${isQrFlipped ? "[transform:rotateY(180deg)]" : ""}`}>
+                            {/* A SITE: LINKEDIN QR */}
+                            <div className="absolute inset-0 bg-white p-4 rounded-xl shadow-[0_0_30px_rgba(249,115,22,0.15)] [backface-visibility:hidden] overflow-hidden group">
+                                <QRCode
+                                    value="https://www.linkedin.com/in/kacper-gumulak-dev/"
+                                    size={180}
+                                    bgColor="#ffffff"
+                                    fgColor="#09090b"
+                                    level="Q"
+                                />
+                                <div className="absolute top-0 left-0 w-full h-[2px] bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,1)] opacity-50 group-hover:opacity-100 animate-[scan_2s_ease-in-out_infinite]" style={{ animationName: 'scan' }} />
+                            </div>
+
+                            {/* B SITE: PORTFOLIO QR */}
+                            <div className="absolute inset-0 bg-white p-4 rounded-xl shadow-[0_0_30px_rgba(249,115,22,0.15)] [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden group">
+                                <QRCode
+                                    value="https://kacpergumulak.pl"
+                                    size={180}
+                                    bgColor="#ffffff"
+                                    fgColor="#09090b"
+                                    level="Q"
+                                />
+                                <div className="absolute top-0 left-0 w-full h-[2px] bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,1)] opacity-50 group-hover:opacity-100 animate-[scan_2s_ease-in-out_infinite]" style={{ animationName: 'scan' }} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DYNAMIC DESCRIPTION BELOW */}
+                    <div className="bg-zinc-900/50 border border-dashed border-zinc-800 rounded-lg p-3 w-full group transition-colors hover:border-orange-500/30">
+                        <p className="text-[10px] text-zinc-500 font-medium select-text">
+                            <span className="text-orange-500 font-bold block mb-1">
+                                {isQrFlipped ? "Tip: Click the code again to flip back!" : "Psst... Easter Egg!"}
+                            </span>
+                            {isQrFlipped ? (
+                                <>You are looking at the <strong>Portfolio Pass</strong>! Scan this with your phone to discover other applications built by me ;)</>
+                            ) : (
+                                <>Take your phone out and scan this code to <strong>connect with the me on LinkedIn</strong>! Or click it to flip the card.</>
+                            )}
+                        </p>
+                    </div>
+                    
+                    <style>{`
+                        @keyframes scan {
+                            0%, 100% { transform: translateY(0); }
+                            50% { transform: translateY(212px); }
+                        }
+                    `}</style>
                 </DialogContent>
             </Dialog>
         </div>

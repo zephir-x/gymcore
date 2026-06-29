@@ -98,6 +98,9 @@ export default function AdminDashboard() {
     const { logout } = useAuth()
     const queryClient = useQueryClient()
 
+    // TABS STATE
+    const [activeTab, setActiveTab] = React.useState("statistics")
+
     // ROOM STATES
     const [isRoomModalOpen, setIsRoomModalOpen] = React.useState(false)
     const [editingRoomId, setEditingRoomId] = React.useState<string | null>(null)
@@ -409,12 +412,23 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <Tabs defaultValue="statistics" className="w-full flex flex-col gap-8">
-                    <TabsList className="flex flex-col sm:flex-row w-full h-auto bg-zinc-900/40 border border-white/5 rounded-2xl p-1.5 gap-1 backdrop-blur-md">
-                        <TabsTrigger value="statistics" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Statistics</TabsTrigger>
-                        <TabsTrigger value="users" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Users</TabsTrigger>
-                        <TabsTrigger value="rooms" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Rooms</TabsTrigger>
-                        <TabsTrigger value="schedule" className="flex-1 text-sm font-bold rounded-xl data-[state=active]:bg-zinc-800 data-[state=active]:text-white data-[state=active]:shadow-md text-zinc-500 hover:text-zinc-300 py-3 transition-all duration-300">Schedule</TabsTrigger>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col gap-8">
+                    <TabsList className="relative flex flex-col sm:flex-row w-full h-auto bg-zinc-900/40 border border-white/5 rounded-2xl p-1.5 gap-1 backdrop-blur-md">
+                        {/* FLOATING BACKGROUND (SLIDER) */}
+                        <div className="absolute inset-1.5 pointer-events-none">
+                            <div className={`w-full sm:w-[calc((100%-0.75rem)/4)] h-[calc((100%-0.75rem)/4)] sm:h-full bg-zinc-800 rounded-xl shadow-md transition-all duration-500 ease-out
+                                ${activeTab === "statistics" ? "translate-y-0 sm:translate-y-0 sm:translate-x-0" : ""}
+                                ${activeTab === "users" ? "translate-y-[calc(100%+0.25rem)] sm:translate-y-0 sm:translate-x-[calc(100%+0.25rem)]" : ""}
+                                ${activeTab === "rooms" ? "translate-y-[calc(200%+0.5rem)] sm:translate-y-0 sm:translate-x-[calc(200%+0.5rem)]" : ""}
+                                ${activeTab === "schedule" ? "translate-y-[calc(300%+0.75rem)] sm:translate-y-0 sm:translate-x-[calc(300%+0.75rem)]" : ""}
+                            `} />
+                        </div>
+
+                        {/* TABS */}
+                        <TabsTrigger value="statistics" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Statistics</TabsTrigger>
+                        <TabsTrigger value="users" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Users</TabsTrigger>
+                        <TabsTrigger value="rooms" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Rooms</TabsTrigger>
+                        <TabsTrigger value="schedule" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Schedule</TabsTrigger>
                     </TabsList>
 
                     {/* STATISTICS TAB */}

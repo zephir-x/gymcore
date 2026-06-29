@@ -194,12 +194,16 @@ export default function MemberDashboard() {
                                         <p className="text-xs text-zinc-400 font-medium">Valid until: <span className="text-zinc-300">{new Date(subscription.endDate).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}</span></p>
                                     </div>
 
-                                    {!isManaging ? (
-                                        <Button variant="outline" className="w-full h-12 bg-zinc-900/50 border-white/10 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors font-bold outline-none ring-0 focus-visible:ring-0" onClick={() => setIsManaging(true)}>
-                                            <Settings size={18} className="mr-2" /> Manage Subscription
-                                        </Button>
-                                    ) : (
-                                        <div className="flex flex-col gap-3 p-5 bg-zinc-950/50 rounded-2xl border border-white/5 animate-in slide-in-from-top-4 fade-in duration-400 ease-out">
+                                    <div className="relative overflow-hidden transition-all duration-500 ease-out" style={{ maxHeight: isManaging ? '300px' : '48px' }}>
+                                        {/* MAIN BUTTON */}
+                                        <div className={`absolute top-0 left-0 w-full transition-all duration-500 ease-in-out ${isManaging ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+                                            <Button variant="outline" className="w-full h-12 bg-zinc-900/50 border-white/10 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-all duration-300 font-bold outline-none ring-0 focus-visible:ring-0" onClick={() => setIsManaging(true)}>
+                                                <Settings size={18} className="mr-2" /> Manage Subscription
+                                            </Button>
+                                        </div>
+
+                                        {/* SLIDING ACTION PANEL */}
+                                        <div className={`flex flex-col gap-3 p-5 bg-zinc-950/50 rounded-2xl border border-white/5 transition-all duration-500 ease-in-out w-full ${isManaging ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8 pointer-events-none'}`}>
                                             <p className="text-sm font-bold text-zinc-400 text-center mb-1">Available Actions</p>
                                             <Link to="/subscriptions" className="w-full block outline-none">
                                                 <Button className="w-full h-11 bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white border-none shadow-[0_0_15px_rgba(249,115,22,0.15)] transition-all font-bold">
@@ -208,7 +212,7 @@ export default function MemberDashboard() {
                                             </Link>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" className="w-full h-11 bg-red-500/5 hover:bg-red-500/10 text-red-400 hover:text-red-300 border-red-500/20 font-bold">
+                                                    <Button variant="outline" className="w-full h-11 bg-red-500/5 hover:bg-red-500/10 text-red-400 hover:text-red-300 border-red-500/20 font-bold transition-all duration-300">
                                                         <ShieldAlert size={16} className="mr-2" /> Cancel Subscription
                                                     </Button>
                                                 </AlertDialogTrigger>
@@ -223,9 +227,9 @@ export default function MemberDashboard() {
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
-                                            <Button type="button" className="w-full mt-2 bg-transparent text-zinc-500 hover:bg-zinc-800 hover:text-white border-none shadow-none" onClick={() => setIsManaging(false)}>Close Panel</Button>
+                                            <Button type="button" className="w-full mt-2 bg-transparent text-zinc-500 hover:bg-zinc-800 hover:text-white transition-all duration-300 border-none shadow-none" onClick={() => setIsManaging(false)}>Close Panel</Button>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-6 max-w-md mx-auto w-full text-center">

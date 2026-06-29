@@ -30,56 +30,56 @@ function DialogClose({
 }
 
 function DialogOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+                         className,
+                         ...props
+                       }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn(
-          "fixed inset-0 isolate z-50 bg-black/80 backdrop-blur-sm duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
-          className
-      )}
-      {...props}
-    />
+      <DialogPrimitive.Overlay
+          data-slot="dialog-overlay"
+          className={cn(
+              "fixed inset-0 isolate z-50 bg-black/80 backdrop-blur-sm duration-500 ease-out data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+              className
+          )}
+          {...props}
+      />
   )
 }
 
 function DialogContent({
-  className,
-  children,
-  showCloseButton = true,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+                         className,
+                         children,
+                         showCloseButton = true,
+                         ...props
+                       }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
   return (
-    <DialogPortal>
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        data-slot="dialog-content"
-        className={cn(
-            "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-zinc-950 border border-white/10 p-4 text-sm text-zinc-100 shadow-2xl duration-100 outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-            className
-        )}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-2 right-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-full outline-none ring-0 focus-visible:ring-0 focus-visible:outline-none"
-              size="icon-sm"
-            >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content>
-    </DialogPortal>
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+            data-slot="dialog-content"
+            className={cn(
+                "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-zinc-950 border border-white/10 p-4 text-sm text-zinc-100 shadow-2xl outline-none ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:outline-none sm:max-w-sm",
+                "duration-500 ease-out data-open:animate-in data-open:fade-in-0 data-open:zoom-in-75 data-open:slide-in-from-left-1/2 data-open:slide-in-from-bottom-[30%] data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-75 data-closed:slide-out-to-left-1/2 data-closed:slide-out-to-bottom-[30%]",
+                className
+            )}
+            {...props}
+        >
+          {children}
+          {showCloseButton && (
+              <DialogPrimitive.Close data-slot="dialog-close" asChild>
+                <Button
+                    variant="ghost"
+                    className="absolute top-2 right-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-full outline-none ring-0 focus-visible:ring-0 focus-visible:outline-none"
+                    size="icon-sm"
+                >
+                  <XIcon />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Content>
+      </DialogPortal>
   )
 }
 

@@ -72,6 +72,9 @@ builder.Services.AddScoped<GymCore.Application.Common.Services.StripePaymentServ
 // Registration for GuardWorker who looks for status modyfications
 builder.Services.AddHostedService<GymCore.Api.Workers.GuardWorker>();
 
+// Registration for ScheduleWorker who looks for new activities on platform
+builder.Services.AddHostedService<GymCore.Api.Workers.ScheduleGeneratorWorker>();
+
 var app = builder.Build();
 
 // Seeding the database
