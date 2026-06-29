@@ -7,27 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/context/AuthContext"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
-import {
-    LogOut,
-    Clock,
-    ChevronRight,
-    Users,
-    Award,
-    Activity,
-    Calendar,
-    XCircle,
-    Dumbbell,
-    MapPin,
-    Navigation,
-    Bell,
-    CheckCircle2,
-    Send,
-    Bot,
-    Sparkles,
-    Loader2,
-    QrCode,
-    UserCircle
-} from "lucide-react"
+import { Home as HomeIcon, LogOut, Clock, ChevronRight, Users, Award, Activity, Calendar, XCircle, Dumbbell, MapPin, Navigation, Bell, CheckCircle2, Send, Bot, Sparkles, Loader2, QrCode, UserCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -54,6 +34,7 @@ export default function Home() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const [isQrModalOpen, setIsQrModalOpen] = useState(false)
     const [isQrFlipped, setIsQrFormFlipped] = useState(false)
+    const [mobileTab, setMobileTab] = useState<'profile' | 'home' | 'agenda'>('home')
 
     const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }) }
     useEffect(() => { if (isChatOpen) scrollToBottom() }, [chatMessages, isChatOpen])
@@ -172,7 +153,7 @@ export default function Home() {
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
             {/* LEFT COLUMN: PROFILE & NAV */}
-            <aside className="hidden lg:flex w-[320px] flex-col border-r border-white/10 bg-zinc-950 p-6 overflow-hidden h-full shrink-0">
+            <aside className={`${mobileTab === 'profile' ? 'flex' : 'hidden'} lg:flex w-full lg:w-[320px] flex-col border-r border-white/10 bg-zinc-950 p-6 pb-24 lg:pb-6 overflow-y-auto h-full shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
                 {/* LOGO */}
                 <div className="mb-10 shrink-0 flex justify-center w-full">
                     <h1 className="text-3xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
@@ -234,7 +215,7 @@ export default function Home() {
                 {/* QR CODE */}
                 <Button
                     onClick={() => setIsQrModalOpen(true)}
-                    className="w-full mb-4 h-11 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:border-orange-500/30 text-zinc-300 hover:text-orange-500 transition-all duration-300 font-bold flex items-center justify-center shrink-0 group relative overflow-hidden"
+                    className="hidden lg:flex w-full mb-4 h-11 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:border-orange-500/30 text-zinc-300 hover:text-orange-500 transition-all duration-300 font-bold items-center justify-center shrink-0 group relative overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
 
@@ -286,13 +267,19 @@ export default function Home() {
                 </div>
 
                 {/* LOGOUT */}
-                <Button variant="ghost" onClick={handleLogout} className="w-full justify-center text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors shrink-0">
-                    <LogOut size={20} className="mr-3" /> Log Out
-                </Button>
+                <div className="mt-auto pt-4 shrink-0 w-full">
+                    <Button
+                        variant="outline"
+                        onClick={handleLogout}
+                        className="w-full justify-center text-zinc-400 hover:text-red-400 bg-zinc-950 hover:bg-red-950/30 border-white/10 hover:border-red-500/30 transition-all duration-300 h-11 font-bold"
+                    >
+                        <LogOut size={18} className="mr-2" /> Log Out
+                    </Button>
+                </div>
             </aside>
 
             {/* CENTRAL AREA: MAIN DASHBOARD */}
-            <main className="flex-1 flex flex-col overflow-y-auto p-8 lg:p-12 bg-zinc-950 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <main className={`${mobileTab === 'home' ? 'flex' : 'hidden'} lg:flex flex-1 flex-col overflow-y-auto p-4 lg:p-12 pb-24 lg:pb-12 bg-zinc-950 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative w-full`}>
                 {/* GREETING HEADER */}
                 <header className="mb-10 shrink-0">
                     <h2 className="text-4xl font-bold text-white mb-1">Welcome back, {displayName}!</h2>
@@ -519,9 +506,10 @@ export default function Home() {
             </main>
 
             {/* RIGHT COLUMN: WIDGETS */}
-            <aside className="hidden xl:flex w-[350px] flex-col border-l border-white/10 bg-zinc-950 p-6 overflow-hidden h-full justify-between shrink-0">
+            <aside className={`${mobileTab === 'agenda' ? 'flex lg:hidden xl:flex' : 'hidden xl:flex'} w-full xl:w-[350px] flex-col border-l border-white/10 bg-zinc-950 p-6 pb-24 xl:pb-6 overflow-y-auto h-full justify-between shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
+
                 {/* MODULE: MY UPCOMING BOOKINGS */}
-                <div className="flex-1 flex flex-col min-h-0 w-full mb-6">
+                <div className={`${isChatOpen ? 'hidden lg:flex' : 'flex'} flex-1 flex-col min-h-0 w-full mb-6`}>
                     <div className="flex items-center gap-2 mb-6 shrink-0">
                         <Calendar size={18} className="text-orange-500" />
                         <h3 className="text-lg font-bold text-white tracking-tight">Upcoming Schedule</h3>
@@ -598,7 +586,7 @@ export default function Home() {
                 </div>
 
                 {/* MODULE: GYM LOCATION & DIRECTIONS */}
-                <div className="relative h-[160px] bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden mb-4 shrink-0 w-full group">
+                <div className={`${isChatOpen ? 'hidden lg:flex' : 'flex'} relative h-[160px] bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden mb-4 shrink-0 w-full group`}>
                     <iframe
                         title="GymCore Location"
                         src="https://maps.google.com/maps?q=Z%C5%82ote%20Tarasy,%20Warsaw&t=&z=14&ie=UTF8&iwloc=&output=embed"
@@ -636,7 +624,7 @@ export default function Home() {
                 </div>
 
                 {/* AI ASSISTANT WIDGET */}
-                <div className={`bg-zinc-900/40 border border-white/5 rounded-2xl flex flex-col shrink-0 w-full transition-all duration-500 overflow-hidden relative group ${isChatOpen ? "h-[400px] shadow-[0_0_30px_rgba(249,115,22,0.15)] border-orange-500/30" : "h-[70px] hover:bg-zinc-900/60 cursor-pointer"}`}>
+                <div className={`${!isChatOpen ? 'hidden lg:flex' : 'flex'} bg-zinc-900/40 border border-white/5 rounded-2xl flex-col shrink-0 w-full transition-all duration-500 overflow-hidden relative group ${isChatOpen ? "flex-1 lg:flex-none lg:h-[400px] shadow-[0_0_30px_rgba(249,115,22,0.15)] border-orange-500/30" : "h-[70px] hover:bg-zinc-900/60 cursor-pointer"}`}>
                     {/* COLLAPSED HEADER / TOGGLE */}
                     <div
                         onClick={() => setIsChatOpen(!isChatOpen)}
@@ -874,6 +862,61 @@ export default function Home() {
                     `}</style>
                 </DialogContent>
             </Dialog>
+            
+            {/* MOBILE BOTTOM NAVIGATION BAR (PWA Style) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-t border-white/5 pb-safe">
+                <nav className="flex items-center justify-around px-2 py-3">
+
+                    {/* SITE 1: PROFILE (LEFT COLUMN) */}
+                    <button
+                        onClick={() => setMobileTab('profile')}
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors relative ${mobileTab === 'profile' ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                        {notifications?.some(n => !n.isRead) && (
+                            <span className="absolute top-1 right-2 w-2 h-2 bg-orange-500 rounded-full border border-zinc-950" />
+                        )}
+                        <UserCircle size={20} className={mobileTab === 'profile' ? 'fill-orange-500/20' : ''} />
+                        <span className="text-[10px] font-bold">Profile</span>
+                    </button>
+
+                    {/* SITE 2: HOME (CENTRAL COLUMN) */}
+                    <button
+                        onClick={() => setMobileTab('home')}
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${mobileTab === 'home' ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                        <HomeIcon size={20} className={mobileTab === 'home' ? 'fill-orange-500/20' : ''} />
+                        <span className="text-[10px] font-bold">Explore</span>
+                    </button>
+
+                    {/* QR CODE */}
+                    <div className="relative -top-5">
+                        <button
+                            onClick={() => setIsQrModalOpen(true)}
+                            className="w-14 h-14 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(249,115,22,0.4)] border-4 border-zinc-950 hover:scale-105 transition-transform"
+                        >
+                            <QrCode size={24} />
+                        </button>
+                    </div>
+
+                    {/* SITE 3: AGENDA (RIGHT COLUMN) */}
+                    <button
+                        onClick={() => { setMobileTab('agenda'); setIsChatOpen(false); }}
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${mobileTab === 'agenda' && !isChatOpen ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                        <Calendar size={20} className={mobileTab === 'agenda' && !isChatOpen ? 'fill-orange-500/20' : ''} />
+                        <span className="text-[10px] font-bold">Agenda</span>
+                    </button>
+
+                    {/* SITE 4: AI CHAT */}
+                    <button
+                        onClick={() => { setMobileTab('agenda'); setIsChatOpen(true); }}
+                        className={`flex flex-col items-center gap-1 p-2 transition-colors ${mobileTab === 'agenda' && isChatOpen ? 'text-orange-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                        <Bot size={20} className={mobileTab === 'agenda' && isChatOpen ? 'fill-orange-500/20' : ''} />
+                        <span className="text-[10px] font-bold">AI Chat</span>
+                    </button>
+                </nav>
+            </div>
         </div>
     )
 }

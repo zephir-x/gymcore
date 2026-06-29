@@ -1,12 +1,11 @@
 ﻿import { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useNavigate, Link } from "react-router-dom"
+import { useQuery, useMutation } from "@tanstack/react-query"
+import { Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { ArrowLeft, Sparkles, Zap, CheckCircle2, XCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 /* INTERFACES */
 interface SubscriptionTier {
@@ -17,8 +16,6 @@ interface SubscriptionTier {
 
 /* COMPONENT */
 export default function Subscriptions() {
-    const navigate = useNavigate()
-    const queryClient = useQueryClient()
 
     /* STATE */
     const [months, setMonths] = useState<number>(1)
@@ -54,7 +51,7 @@ export default function Subscriptions() {
             if (redirectUrl) {
                 window.location.href = redirectUrl;
             } else {
-                toast.error("Critital Error", { description: "The server did not return a payment link." });
+                toast.error("Critical Error", { description: "The server did not return a payment link." });
             }
         },
         onError: (error: any) => {
@@ -109,19 +106,25 @@ export default function Subscriptions() {
                 </div>
 
                 <div className="flex justify-center mb-12">
-                    <div className="bg-zinc-900/50 p-1.5 rounded-2xl border border-white/5 inline-flex backdrop-blur-md relative z-20 shadow-lg">
-                        <button onClick={() => setMonths(1)} className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${months === 1 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
-                            {months === 1 && <div className="absolute inset-0 bg-zinc-800 rounded-xl shadow-md border border-white/10 -z-10" />}
-                            1 Month
-                        </button>
-                        <button onClick={() => setMonths(6)} className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${months === 6 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
-                            {months === 6 && <div className="absolute inset-0 bg-zinc-800 rounded-xl shadow-md border border-white/10 -z-10" />}
-                            6 Months
-                        </button>
-                        <button onClick={() => setMonths(12)} className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${months === 12 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
-                            {months === 12 && <div className="absolute inset-0 bg-zinc-800 rounded-xl shadow-md border border-white/10 -z-10" />}
-                            12 Months
-                        </button>
+                    <div className="bg-zinc-900/50 p-1.5 rounded-2xl border border-white/5 inline-flex backdrop-blur-md relative z-20 shadow-lg w-full max-w-[360px] md:max-w-[420px]">
+                        <div className="relative flex w-full">
+                            {/* FLOATING BACKGROUND PILL*/}
+                            <div className={`absolute top-0 bottom-0 left-0 w-1/3 bg-zinc-800 rounded-xl shadow-md border border-white/10 transition-transform duration-500 ease-out pointer-events-none
+                                ${months === 1 ? 'translate-x-0' : ''}
+                                ${months === 6 ? 'translate-x-full' : ''}
+                                ${months === 12 ? 'translate-x-[200%]' : ''}
+                            `} />
+
+                            <button onClick={() => setMonths(1)} className={`relative z-10 flex-1 py-2.5 text-sm font-bold transition-colors duration-300 ${months === 1 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                                1 Month
+                            </button>
+                            <button onClick={() => setMonths(6)} className={`relative z-10 flex-1 py-2.5 text-sm font-bold transition-colors duration-300 ${months === 6 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                                6 Months
+                            </button>
+                            <button onClick={() => setMonths(12)} className={`relative z-10 flex-1 py-2.5 text-sm font-bold transition-colors duration-300 ${months === 12 ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                                12 Months
+                            </button>
+                        </div>
                     </div>
                 </div>
 

@@ -134,39 +134,51 @@ export default function TrainerDashboard() {
 
             <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
                 {/* HEADER */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-2 gap-4 px-2">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-zinc-900/80 rounded-xl border border-white/5">
-                            <ShieldAlert className="text-orange-500" size={24} />
+                <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-2 px-2 gap-4">
+                    {/* LEFT SITE: LOGO & WELCOME */}
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2.5 md:p-3 bg-zinc-900/80 rounded-xl border border-white/5 shrink-0">
+                            <ShieldAlert className="text-orange-500 w-5 h-5 md:w-6 md:h-6" />
                         </div>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Trainer Portal</h1>
-                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Welcome to your workspace, <span className="text-orange-400">{profile?.firstName || user?.firstName}</span>!</p>
+                        <div className="min-w-0">
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight text-white truncate">Trainer Portal</h1>
+                            <p className="text-[10px] md:text-sm text-zinc-400 font-medium truncate mt-0.5">
+                                Welcome, <span className="text-orange-400">{profile?.firstName || user?.firstName}</span>
+                            </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 mr-2">
+
+                    {/* RIGHT SITE: ACTION BAR */}
+                    <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                        {/* NOTIFICATIONS */}
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setIsNotificationsModalOpen(true)}
-                            className="text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors rounded-xl"
+                            className="text-zinc-400 hover:text-orange-400 hover:bg-orange-500/10 transition-colors rounded-xl w-9 h-9 md:w-10 md:h-10 shrink-0"
                         >
                             <div className="relative">
-                                <Bell size={20} />
+                                <Bell size={18} />
                                 {notifications?.some(n => !n.isRead) && (
-                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full border border-zinc-950 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></span>
+                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full border border-zinc-950 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></span>
                                 )}
                             </div>
                         </Button>
-                        <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
-                            <LogOut size={18} className="mr-2" /> Log out
+
+                        {/* LOGOUT */}
+                        <Button
+                            variant="ghost"
+                            onClick={logout}
+                            className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors px-2 md:px-4 h-9 md:h-10 shrink-0"
+                        >
+                            <LogOut size={18} className="md:mr-2" />
+                            <span className="hidden md:block font-bold">Log out</span>
                         </Button>
                     </div>
                 </div>
 
                 {/* FLAT GRID FOR PERFECT ALIGNMENT */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
                     {/* ROW 1 */}
                     <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md outline-none ring-0 shadow-xl overflow-hidden relative group lg:col-span-1 animate-in slide-in-from-left-4 duration-500 h-full flex flex-col min-h-[300px]">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full blur-2xl group-hover:bg-orange-500/20 transition-all duration-500" />

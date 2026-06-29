@@ -105,15 +105,18 @@ export default function MemberDashboard() {
             <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
 
             <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-2 gap-4 px-2">
-                    <div className="flex items-center gap-4">
-                        <Link to="/"><Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl border border-white/5 shrink-0"><ArrowLeft size={20} /></Button></Link>
+                <div className="flex flex-row items-center justify-between border-b border-white/5 pb-6 pt-2 gap-2 md:gap-4 px-1 md:px-2">
+                    <div className="flex items-center gap-3 md:gap-4">
+                        <Link to="/"><Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl border border-white/5 shrink-0 w-9 h-9 md:w-10 md:h-10"><ArrowLeft size={18} /></Button></Link>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Member Portal</h1>
-                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Manage your account and subscription</p>
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight text-white">Member Portal</h1>
+                            <p className="text-[10px] md:text-sm text-zinc-400 font-medium mt-0.5">Manage your account</p>
                         </div>
                     </div>
-                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors mr-2"><LogOut size={18} className="mr-2" /> Log out</Button>
+                    <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors shrink-0 px-2 md:px-4 h-9 md:h-10">
+                        <LogOut size={18} className="md:mr-2" />
+                        <span className="hidden md:block font-bold">Log out</span>
+                    </Button>
                 </div>
 
                 {/* FLAT GRID FOR PERFECT ROWS ALIGNMENT */}

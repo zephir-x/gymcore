@@ -388,26 +388,43 @@ export default function AdminDashboard() {
 
             <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
                 {/* HEADER */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 pt-4 md:pt-0 gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-zinc-900/80 rounded-xl border border-white/5">
-                            <ShieldAlert className="text-orange-500" size={24} />
+                <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-2 px-2 gap-4">
+                    {/* LEFT SITE: LOGO & WELCOME */}
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2.5 md:p-3 bg-zinc-900/80 rounded-xl border border-white/5 shrink-0">
+                            <ShieldAlert className="text-orange-500 w-5 h-5 md:w-6 md:h-6" />
                         </div>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">Admin Command Center</h1>
-                            <p className="text-xs md:text-sm text-zinc-400 font-medium mt-0.5">Manage infrastructure, schedule, and system users</p>
+                        <div className="min-w-0">
+                            <h1 className="text-xl md:text-3xl font-bold tracking-tight text-white truncate">
+                                <span className="md:hidden">Admin Center</span>
+                                <span className="hidden md:inline">Admin Command Center</span>
+                            </h1>
+                            <p className="hidden md:block text-sm text-zinc-400 font-medium mt-0.5 truncate">Manage infrastructure, schedule, and system users</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    {/* RIGHT SITE: ACTION BAR */}
+                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                        {/* BROADCAST */}
                         <Button
                             variant="outline"
                             onClick={() => setIsBroadcastModalOpen(true)}
-                            className="bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-400 font-bold transition-all shadow-[0_0_10px_rgba(245,158,11,0.1)]"
+                            className="bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 hover:text-amber-400 font-bold transition-all shadow-[0_0_10px_rgba(245,158,11,0.1)] px-3 md:px-4 h-9 md:h-10 shrink-0"
                         >
-                            <Megaphone size={16} className="mr-2" /> Broadcast
+                            <Megaphone size={16} className="md:mr-2" />
+                            <span className="hidden md:block">Broadcast</span>
                         </Button>
-                        <Button variant="ghost" onClick={logout} className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors">
-                            <LogOut size={18} className="mr-2" /> Log out
+                        
+                        <div className="hidden md:block w-px h-6 bg-white/10 mx-1" />
+
+                        {/* LOG OUT */}
+                        <Button
+                            variant="ghost"
+                            onClick={logout}
+                            className="text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors px-3 md:px-4 h-9 md:h-10 shrink-0"
+                        >
+                            <LogOut size={18} className="md:mr-2" />
+                            <span className="hidden md:block font-bold">Log out</span>
                         </Button>
                     </div>
                 </div>
@@ -529,7 +546,7 @@ export default function AdminDashboard() {
                                 <h2 className="text-xl font-bold text-white">Gym Trainers</h2>
                                 <Button
                                     onClick={() => setIsCoachModalOpen(true)}
-                                    className="bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white border-none shadow-[0_0_15px_rgba(249,115,22,0.15)] transition-all font-bold"
+                                    className="w-full md:w-auto h-8 px-6 bg-gradient-to-r from-orange-600 via-amber-400 to-orange-600 bg-[length:200%_auto] hover:bg-[position:right_center] text-white border-none shadow-[0_4px_12px_rgba(249,115,22,0.3)] hover:shadow-[0_4px_20px_rgba(249,115,22,0.5)] transition-all duration-500 font-bold flex items-center justify-center gap-2"
                                 >
                                     + Add Employee
                                 </Button>
