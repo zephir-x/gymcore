@@ -120,9 +120,9 @@ namespace GymCore.Application.Features.AI.Commands.ChatWithAi
             }
 
             sb.AppendLine("\n--- INSTRUCTIONS FOR YOU ---");
-            sb.AppendLine("1. Be brief and structured. Use bullet points.");
+            sb.AppendLine("1. Be brief and structured. Use bullet points. Do not summarize the entire gym info every time. Focus ONLY on the user's question.");
             sb.AppendLine("2. ALWAYS link functionality back to the business rules. If they ask about classes, explain they need PRO/VIP.");
-            sb.AppendLine("3. If the user asks for a joke: Tell a funny, fitness-related one, but link it to coding if possible (e.g., 'Why did the developer go to the gym? To improve his compile-time physique').");
+            sb.AppendLine("3. You are a witty gym buddy. If the user asks for a joke or the vibe is right, make them laugh. Keep it light, sarcastic but supportive.");
             sb.AppendLine("4. If the user asks about the project: Briefly explain the Clean Architecture and CQRS and invite them to see the source code on GitHub: https://github.com/zephir-x/gymcore");
             sb.AppendLine("5. Maintain the 'GymCore AI' persona – you are part of the platform, not just a generic LLM.");
             
@@ -141,8 +141,8 @@ namespace GymCore.Application.Features.AI.Commands.ChatWithAi
             {
                 model = "deepseek-chat",
                 messages = messagesPayload,
-                temperature = 0.5, // Set to 0.5 - the perfect balance between being specific and creative
-                max_tokens = 500
+                temperature = 0.7, // Set to 0.5 - the perfect balance between being specific and creative
+                max_tokens = 300
             };
             
             // DeepSeek API Shot

@@ -115,7 +115,7 @@ export default function Home() {
         }
     })
 
-    const handleSendMessage = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => { // Zmieniono na FormEvent
         e.preventDefault()
         if (!currentInput.trim()) return
 
@@ -125,7 +125,10 @@ export default function Home() {
         setChatMessages(newHistory)
         setCurrentInput("")
 
-        chatMutation.mutate(newHistory)
+        // We send the last 3 messages to API
+        const payloadHistory = newHistory.slice(-3)
+
+        chatMutation.mutate(payloadHistory)
     }
 
     if (user?.role === "Coach" || user?.role === "Admin") return <Navigate to="/dashboard" replace />

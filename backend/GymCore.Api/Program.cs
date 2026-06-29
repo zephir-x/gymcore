@@ -75,7 +75,19 @@ builder.Services.AddHostedService<GymCore.Api.Workers.GuardWorker>();
 // Registration for ScheduleWorker who looks for new activities on platform
 builder.Services.AddHostedService<GymCore.Api.Workers.ScheduleGeneratorWorker>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
+        
+        policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowSpecificOrigin");
 
 // Seeding the database
 using (var scope = app.Services.CreateScope())
@@ -95,10 +107,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseCors(builder => builder.WithOrigins("http://localhost:5173").AllowAnyMethod().AllowAnyHeader());
-
-app.UseHttpsRedirection();
 
 app.UseAuthentication(); // Checks who you are (decodes the token)
 app.UseAuthorization();  // Checks if you have permissions to this endpoint

@@ -1,5 +1,5 @@
 ﻿services:
-  db:
+  gymcore_db:
     image: postgres:16-alpine
     container_name: gymcore_postgres
     environment:
@@ -7,10 +7,41 @@
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - gymcore_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  gymcore_api:
+    image: gymcore_api_image
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gymcore_api
+    depends_on:
+      - gymcore_db
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=gymcore_postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - JwtSettings__Secret=${JWT_SECRET}
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+      - DeepSeek__ApiKey=${DEEPSEEK_API_KEY}
+    ports:
+      - "5119:8080"
+    restart: unless-stopped
+
+  gymcore_frontend:
+    image: gymcore_frontend_image
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gymcore_frontend
+    ports:
+      - "5173:80"
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  gymcore_postgres_data:
