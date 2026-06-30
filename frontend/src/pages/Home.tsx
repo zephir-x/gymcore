@@ -118,7 +118,7 @@ export default function Home() {
         }
     })
 
-    const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => { // Zmieniono na FormEvent
+    const handleSendMessage = (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault()
         if (!currentInput.trim()) return
 
@@ -241,7 +241,7 @@ export default function Home() {
                         )}
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-1 space-y-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden relative">
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {notifications && notifications.length > 0 ? (
                             notifications.map(n => (
                                 <div key={n.id} className={`p-3 rounded-xl border text-left flex flex-col gap-1.5 transition-all relative group ${n.isRead ? 'bg-zinc-950/50 border-white/5' : 'bg-zinc-900/60 border-orange-500/20 shadow-[0_0_10px_rgba(249,115,22,0.05)]'}`}>
@@ -268,8 +268,8 @@ export default function Home() {
                                 <p className="text-xs text-zinc-500 font-medium">You're all caught up!</p>
                             </div>
                         )}
-                        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#141417] to-transparent pointer-events-none" />
                     </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#141417] to-transparent pointer-events-none" />
                 </div>
 
                 {/* LOGOUT */}
