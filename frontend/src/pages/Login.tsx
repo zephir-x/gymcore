@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 const loginSchema = z.object({
     email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Incorrect email address."),
@@ -20,6 +21,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function Login() {
+    useDocumentTitle('Login');
+    
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const { login } = useAuth()

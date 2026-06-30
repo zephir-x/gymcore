@@ -11,6 +11,7 @@ import { Home as HomeIcon, LogOut, Clock, ChevronRight, Users, Award, Activity, 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 interface GroupClass { id: string; name: string; coachName: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; imageUrl?: string | null }
 interface Reservation { reservationId: string; targetId: string | null; title: string; trainerName: string; startTime: string; endTime: string; status: string; type: string; }
@@ -21,6 +22,8 @@ interface NotificationItem { id: string; title: string; message: string; isRead:
 interface ChatMessage { role: 'user' | 'assistant'; content: string; }
 
 export default function Home() {
+    useDocumentTitle('Home');
+    
     const { user, logout } = useAuth()
     const queryClient = useQueryClient()
 

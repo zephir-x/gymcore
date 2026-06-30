@@ -13,24 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert, ImageIcon, Megaphone } from 'lucide-react'
 
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 // PREDEFINED PREMIUM IMAGES FOR ROOMS AND CLASSES
 const PRESET_FACILITY_IMAGES = [
@@ -95,6 +80,8 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+    useDocumentTitle('Dashboard');
+    
     const { logout } = useAuth()
     const queryClient = useQueryClient()
 

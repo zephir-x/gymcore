@@ -5,6 +5,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import { ArrowLeft, LogOut, Settings, Award, ShieldAlert, Zap, UserCircle, Activity, Calendar, TrendingUp, CheckCircle2 } from "lucide-react"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +28,8 @@ interface Reservation { trainerName: string; reservationId: string; title: strin
 interface MyProfile { id: string; email: string; firstName: string; lastName: string; avatarUrl: string | null; bio: string | null; weight: number | null; height: number | null; }
 
 export default function MemberDashboard() {
+    useDocumentTitle('Dashboard');
+    
     const { user, logout } = useAuth()
     const queryClient = useQueryClient()
     const [isManaging, setIsManaging] = useState(false)

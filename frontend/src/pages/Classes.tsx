@@ -5,6 +5,7 @@ import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 /* INTERFACES */
 interface GroupClass { id: string; name: string; coachName: string; startTime: string; endTime: string; maxAttendees: number; currentBookings: number; waitlistCount: number; imageUrl?: string | null; }
@@ -13,6 +14,8 @@ interface Subscription { subscriptionId: string; tierName: string; }
 
 /* COMPONENT */
 export default function Classes() {
+    useDocumentTitle('Classes');
+    
     const queryClient = useQueryClient()
     const [searchParams] = useSearchParams();
     const dateParam = searchParams.get('date');

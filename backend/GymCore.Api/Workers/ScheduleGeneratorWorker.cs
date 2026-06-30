@@ -29,14 +29,17 @@ namespace GymCore.Api.Workers
                     // We are aiming exactly 14 days ahead (rolling window)
                     var targetDate = DateTime.UtcNow.Date.AddDays(14);
 
-                    var alreadyGenerated = await context.GroupClasses
-                        .AnyAsync(c => c.StartTime.Date == targetDate, stoppingToken);
-
-                    if (!alreadyGenerated)
+                    if (targetDate.DayOfWeek == DayOfWeek.Monday || targetDate.DayOfWeek == DayOfWeek.Thursday)
                     {
-                        logger.LogInformation($"Generating automatic schedule for {targetDate:yyyy-MM-dd}...");
-                        await GenerateScheduleForDay(context, targetDate, stoppingToken);
-                        logger.LogInformation($"Schedule for {targetDate:yyyy-MM-dd} generated successfully.");
+                        var alreadyGenerated = await context.GroupClasses
+                            .AnyAsync(c => c.StartTime.Date == targetDate, stoppingToken);
+
+                        if (!alreadyGenerated)
+                        {
+                            logger.LogInformation($"Generating automatic schedule for {targetDate:yyyy-MM-dd}...");
+                            await GenerateScheduleForDay(context, targetDate, stoppingToken);
+                            logger.LogInformation($"Schedule for {targetDate:yyyy-MM-dd} generated successfully.");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -61,33 +64,36 @@ namespace GymCore.Api.Workers
 
             if (!coaches.Any() || !rooms.Any()) return;
             
-            // Generating 3 group classes per day
-            var classHours = new[] { 17, 18, 19 };
-
-            foreach (var hour in classHours)
+            // Generating 2 group classes per week
+            if (targetDate.DayOfWeek == DayOfWeek.Monday || targetDate.DayOfWeek == DayOfWeek.Thursday)
             {
-                var coach = coaches[random.Next(coaches.Count)];
-                var room = rooms[random.Next(rooms.Count)];
-                var className = _classNames[random.Next(_classNames.Length)];
+                var classHours = new[] { 18 };
 
-                var startTime = targetDate.AddHours(hour);
-                var endTime = startTime.AddHours(1);
+                foreach (var hour in classHours)
+                {
+                    var coach = coaches[random.Next(coaches.Count)];
+                    var room = rooms[random.Next(rooms.Count)];
+                    var className = _classNames[random.Next(_classNames.Length)];
 
-                var newClass = new GroupClass(
-                    name: className,
-                    coachId: coach.Id,
-                    roomId: room.Id,
-                    startTime: startTime,
-                    endTime: endTime,
-                    maxAttendees: room.MaxCapacity > 0 ? room.MaxCapacity : 15,
-                    imageUrl: room.ImageUrl
-                );
+                    var startTime = targetDate.AddHours(hour);
+                    var endTime = startTime.AddHours(1);
 
-                context.GroupClasses.Add(newClass);
+                    var newClass = new GroupClass(
+                        name: className,
+                        coachId: coach.Id,
+                        roomId: room.Id,
+                        startTime: startTime,
+                        endTime: endTime,
+                        maxAttendees: room.MaxCapacity > 0 ? room.MaxCapacity : 15,
+                        imageUrl: room.ImageUrl
+                    );
+
+                    context.GroupClasses.Add(newClass);
+                }
             }
             
             // Generating 2 slots for each coach per day
-            var slotHours = new[] { 10, 12, 14, 16 };
+            var slotHours = new[] { 8, 10, 12, 14 };
 
             foreach (var coach in coaches)
             {

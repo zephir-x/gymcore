@@ -5,6 +5,7 @@ import { api } from "@/lib/api"
 import { ArrowLeft, Users, ShieldAlert, ShieldCheck, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 /* INTERFACES */
 interface Room {
@@ -19,6 +20,8 @@ interface Room {
 
 /* COMPONENT */
 export default function Rooms() {
+    useDocumentTitle('Rooms');
+    
     const [selectedRoomDetails, setSelectedRoomDetails] = useState<Room | null>(null);
 
     /* QUERIES */

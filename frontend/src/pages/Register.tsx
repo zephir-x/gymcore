@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 /* SCHEMA */
 const registerSchema = z.object({
@@ -32,6 +33,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>
 
 /* COMPONENT */
 export default function Register() {
+    useDocumentTitle('Register');
+    
     const navigate = useNavigate()
 
     /* FORM STATE */

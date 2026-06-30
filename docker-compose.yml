@@ -29,6 +29,7 @@
       - Stripe__SecretKey=${STRIPE_SECRET_KEY}
       - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
       - DeepSeek__ApiKey=${DEEPSEEK_API_KEY}
+      - FrontendUrl=${FRONTEND_URL}
     ports:
       - "5119:8080"
     restart: unless-stopped

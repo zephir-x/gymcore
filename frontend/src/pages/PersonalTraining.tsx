@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { ArrowLeft, Clock, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 /* INTERFACES */
 interface Coach { id: string; firstName: string; lastName: string; avatarUrl?: string | null }
@@ -14,6 +15,8 @@ interface Subscription { subscriptionId: string; tierName: string; }
 
 /* COMPONENT */
 export default function PersonalTraining() {
+    useDocumentTitle('Personal Trainings');
+    
     const queryClient = useQueryClient()
     const [searchParams] = useSearchParams()
     const urlCoachId = searchParams.get("coachId")

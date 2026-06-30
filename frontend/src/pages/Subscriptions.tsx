@@ -4,8 +4,8 @@ import { Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import { ArrowLeft, Sparkles, Zap, CheckCircle2, XCircle } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
+import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
 
 /* INTERFACES */
 interface SubscriptionTier {
@@ -16,6 +16,7 @@ interface SubscriptionTier {
 
 /* COMPONENT */
 export default function Subscriptions() {
+    useDocumentTitle('Subscriptions');
 
     /* STATE */
     const [months, setMonths] = useState<number>(1)
