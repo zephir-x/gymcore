@@ -118,7 +118,7 @@ export default function Home() {
         }
     })
 
-    const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => { // Zmieniono na FormEvent
+    const handleSendMessage = (e: React.SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault()
         if (!currentInput.trim()) return
 
