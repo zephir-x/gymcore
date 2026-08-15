@@ -79,9 +79,19 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
-        var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
-        
-        policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        policy.SetIsOriginAllowed(origin =>
+            {
+                if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                {
+                    // We allow localhost and any application in the Azure Container Apps cloud
+                    return uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                           uri.Host.EndsWith(".azurecontainerapps.io", StringComparison.OrdinalIgnoreCase);
+                }
+                return false;
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
