@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 
 // We create an Axios instance (we provide the address of our .NET backend)
 export const api = axios.create({
-    baseURL: 'http://localhost:5119',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5119',
     headers: {
         'Content-Type': 'application/json',
     },
