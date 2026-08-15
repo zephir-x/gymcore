@@ -41,9 +41,16 @@ jobs:
       # --- FRONTEND (React) ---
       - name: Build and Push Frontend Image
         run: |
-          docker build --build-arg VITE_API_URL=https://app-gymcore-api-dev.polandcentral.azurecontainerapps.io \
+          API_FQDN=$(az containerapp show \
+            --name ${{ env.API_APP_NAME }} \
+            --resource-group ${{ env.RG_NAME }} \
+            --query properties.configuration.ingress.fqdn \
+            -o tsv)
+
+          docker build --build-arg VITE_API_URL=https://$API_FQDN \
             -t ${{ env.ACR_NAME }}.azurecr.io/gymcore-frontend:${{ github.sha }} \
             -f ./frontend/Dockerfile ./frontend
+          
           docker push ${{ env.ACR_NAME }}.azurecr.io/gymcore-frontend:${{ github.sha }}
 
       - name: Deploy Frontend to Container Apps
