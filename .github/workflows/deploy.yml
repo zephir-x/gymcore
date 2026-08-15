@@ -1,0 +1,52 @@
+﻿name: Build and Deploy GymCore
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ACR_NAME: "acrmthubdev"
+  RG_NAME: "rg-mthub-dev"
+  API_APP_NAME: "app-gymcore-api-dev"
+  FRONT_APP_NAME: "app-gymcore-front-dev"
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure via Managed Identity
+        run: az login --identity
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      # --- BACKEND (API) ---
+      - name: Build and Push API Image
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/gymcore-api:${{ github.sha }} -f ./backend/Dockerfile ./backend
+          docker push ${{ env.ACR_NAME }}.azurecr.io/gymcore-api:${{ github.sha }}
+
+      - name: Deploy API to Container Apps
+        run: |
+          az containerapp update \
+            --name ${{ env.API_APP_NAME }} \
+            --resource-group ${{ env.RG_NAME }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/gymcore-api:${{ github.sha }}
+
+      # --- FRONTEND (React) ---
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/gymcore-frontend:${{ github.sha }} -f ./frontend/Dockerfile ./frontend
+          docker push ${{ env.ACR_NAME }}.azurecr.io/gymcore-frontend:${{ github.sha }}
+
+      - name: Deploy Frontend to Container Apps
+        run: |
+          az containerapp update \
+            --name ${{ env.FRONT_APP_NAME }} \
+            --resource-group ${{ env.RG_NAME }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/gymcore-frontend:${{ github.sha }}

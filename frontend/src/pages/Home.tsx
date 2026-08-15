@@ -159,32 +159,32 @@ export default function Home() {
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 font-sans overflow-hidden select-none">
             {/* LEFT COLUMN: PROFILE & NAV */}
-            <aside className={`${mobileTab === 'profile' ? 'flex' : 'hidden'} lg:flex w-full lg:w-[320px] flex-col border-r border-white/10 bg-zinc-950 p-6 pb-24 lg:pb-6 overflow-y-auto h-full shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
+            <aside className={`${mobileTab === 'profile' ? 'flex' : 'hidden'} lg:flex w-full lg:w-[320px] flex-col border-r border-white/10 bg-zinc-950 p-6 [@media(max-height:850px)]:p-4 pb-24 lg:pb-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden h-full shrink-0`}>
                 {/* LOGO */}
-                <div className="mb-10 shrink-0 flex justify-center w-full">
-                    <h1 className="text-3xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
+                <div className="mb-10 [@media(max-height:850px)]:mb-4 shrink-0 flex justify-center w-full">
+                    <h1 className="text-3xl [@media(max-height:850px)]:text-2xl font-black italic tracking-tighter bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent drop-shadow-sm">
                         GYMCORE
                     </h1>
                 </div>
 
                 {/* PROFILE CARD */}
-                <Link to="/dashboard" className="flex flex-col items-center justify-center text-center gap-2 mb-6 p-4 rounded-2xl border border-transparent hover:border-white/5 hover:bg-zinc-900/40 transition-all duration-300 group shrink-0 w-full">
-                    <Avatar className="h-16 w-16 border-2 border-orange-500 group-hover:scale-105 transition-transform duration-300 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+                <Link to="/dashboard" className="flex flex-col items-center justify-center text-center gap-2 mb-6 [@media(max-height:850px)]:mb-3 p-4 [@media(max-height:850px)]:p-2 rounded-2xl border border-transparent hover:border-white/5 hover:bg-zinc-900/40 transition-all duration-300 group shrink-0 w-full">
+                    <Avatar className="h-16 w-16 [@media(max-height:850px)]:h-10 [@media(max-height:850px)]:w-10 border-2 border-orange-500 group-hover:scale-105 transition-transform duration-300 shadow-[0_0_20px_rgba(249,115,22,0.2)]">
                         {myProfile?.avatarUrl ? (
                             <AvatarImage src={myProfile.avatarUrl} className="object-cover" />
                         ) : (
-                            <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold text-2xl">
+                            <AvatarFallback className="bg-zinc-800 text-orange-500 font-bold text-2xl [@media(max-height:850px)]:text-base">
                                 {displayName.charAt(0)}
                             </AvatarFallback>
                         )}
                     </Avatar>
 
                     <div className="flex flex-col items-center min-w-0 mt-1">
-                        <h2 className="text-lg font-bold text-white leading-tight group-hover:text-orange-500 transition-colors">
+                        <h2 className="text-lg [@media(max-height:850px)]:text-base font-bold text-white leading-tight group-hover:text-orange-500 transition-colors">
                             <span className="block">{displayName}</span>
                         </h2>
 
-                        <p className="text-xs text-zinc-400 font-medium mt-1 mb-2">{user?.role}</p>
+                        <p className="text-xs text-zinc-400 font-medium mt-1 mb-2 [@media(max-height:850px)]:mt-0 [@media(max-height:850px)]:mb-1">{user?.role}</p>
 
                         {/* DYNAMIC MEMBERSHIP BADGE */}
                         <div className="px-3 py-1 bg-zinc-950 border border-dashed border-zinc-800 rounded-md text-[10px] text-zinc-500 whitespace-nowrap overflow-hidden text-ellipsis flex items-center gap-1.5">
@@ -195,25 +195,25 @@ export default function Home() {
                 </Link>
 
                 {/* DYNAMIC STATS (CURRENT PLAN & WORKOUTS) */}
-                <div className="grid grid-cols-2 gap-4 mb-4 shrink-0 w-full">
-                    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-24 relative overflow-hidden group">
+                <div className="grid grid-cols-2 gap-4 [@media(max-height:850px)]:gap-2 mb-4 [@media(max-height:850px)]:mb-2 shrink-0 w-full">
+                    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 [@media(max-height:850px)]:p-2 flex flex-col items-center justify-center text-center h-24 [@media(max-height:850px)]:h-14 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 z-10">Current Plan</span>
                         {isSubscriptionLoading ? (
                             <div className="h-5 w-16 bg-zinc-800 animate-pulse rounded z-10" />
                         ) : (
-                            <span className={`text-sm font-black z-10 ${subscription ? 'text-orange-400' : 'text-zinc-500'}`}>
+                            <span className={`text-sm [@media(max-height:850px)]:text-xs font-black z-10 ${subscription ? 'text-orange-400' : 'text-zinc-500'}`}>
                                 {subscription ? subscription.tierName : "FREE"}
                             </span>
                         )}
                     </div>
 
-                    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-24 relative overflow-hidden group">
+                    <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-4 [@media(max-height:850px)]:p-2 flex flex-col items-center justify-center text-center h-24 [@media(max-height:850px)]:h-14 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1 z-10">Workouts</span>
                         <div className="flex items-center justify-center gap-1.5 z-10">
                             <Activity size={14} className="text-zinc-600" />
-                            <span className="text-xl font-black text-white">{pastWorkoutsCount}</span>
+                            <span className="text-xl [@media(max-height:850px)]:text-base font-black text-white">{pastWorkoutsCount}</span>
                         </div>
                     </div>
                 </div>
@@ -221,16 +221,15 @@ export default function Home() {
                 {/* QR CODE */}
                 <Button
                     onClick={() => setIsQrModalOpen(true)}
-                    className="hidden lg:flex w-full mb-4 h-11 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:border-orange-500/30 text-zinc-300 hover:text-orange-500 transition-all duration-300 font-bold items-center justify-center shrink-0 group relative overflow-hidden"
+                    className="hidden lg:flex w-full mb-4 [@media(max-height:850px)]:mb-2 h-11 [@media(max-height:850px)]:h-9 bg-zinc-900/40 border border-white/5 hover:bg-zinc-900/80 hover:border-orange-500/30 text-zinc-300 hover:text-orange-500 transition-all duration-300 font-bold items-center justify-center shrink-0 group relative overflow-hidden"
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-
                     <QrCode size={18} className="mr-2 group-hover:scale-110 transition-transform" />
-                    Digital Access Pass
+                    <span className="[@media(max-height:850px)]:text-xs">Digital Access Pass</span>
                 </Button>
-                
+
                 {/* NOTIFICATIONS HUB */}
-                <div className="flex-1 flex flex-col min-h-0 w-full mb-6 bg-zinc-900/20 border border-white/5 rounded-2xl p-4 overflow-hidden">
+                <div className="flex-1 flex flex-col min-h-0 w-full mb-6 [@media(max-height:850px)]:mb-2 bg-zinc-900/20 border border-white/5 rounded-2xl p-4 overflow-hidden relative">
                     <div className="flex items-center justify-between mb-3 shrink-0">
                         <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Bell size={14} className={notifications?.some(n => !n.isRead) ? "text-orange-500" : "text-zinc-500"} />
@@ -269,17 +268,18 @@ export default function Home() {
                             </div>
                         )}
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#141417] to-transparent pointer-events-none" />
+
+                    <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none rounded-b-2xl" />
                 </div>
 
                 {/* LOGOUT */}
-                <div className="mt-auto pt-4 shrink-0 w-full">
+                <div className="mt-auto pt-4 [@media(max-height:850px)]:pt-2 shrink-0 w-full">
                     <Button
                         variant="outline"
                         onClick={handleLogout}
-                        className="w-full justify-center text-zinc-400 hover:text-red-400 bg-zinc-950 hover:bg-red-950/30 border-white/10 hover:border-red-500/30 transition-all duration-300 h-11 font-bold"
+                        className="w-full justify-center text-zinc-400 hover:text-red-400 bg-zinc-950 hover:bg-red-950/30 border-white/10 hover:border-red-500/30 transition-all duration-300 h-11 [@media(max-height:850px)]:h-9 font-bold"
                     >
-                        <LogOut size={18} className="mr-2" /> Log Out
+                        <LogOut size={18} className="mr-2" /> <span className="[@media(max-height:850px)]:text-xs">Log Out</span>
                     </Button>
                 </div>
             </aside>
