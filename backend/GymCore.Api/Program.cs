@@ -75,6 +75,8 @@ builder.Services.AddHostedService<GymCore.Api.Workers.GuardWorker>();
 // Registration for ScheduleWorker who looks for new activities on platform
 builder.Services.AddHostedService<GymCore.Api.Workers.ScheduleGeneratorWorker>();
 
+var frontendUrl = builder.Configuration["FrontendUrl"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
@@ -83,9 +85,15 @@ builder.Services.AddCors(options =>
             {
                 if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
                 {
-                    // We allow localhost and any application in the Azure Container Apps cloud
-                    return uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-                           uri.Host.EndsWith(".azurecontainerapps.io", StringComparison.OrdinalIgnoreCase);
+                    // Allow localhost (Local Dev)
+                    bool isLocalhost = uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+                    // Allow Azure Container Apps (Cloud)
+                    bool isAzure = uri.Host.EndsWith(".azurecontainerapps.io", StringComparison.OrdinalIgnoreCase);
+                    // Allow Mikrus VPS (Production from .env)
+                    bool isProduction = !string.IsNullOrEmpty(frontendUrl) && 
+                                        uri.Host.Equals(new Uri(frontendUrl).Host, StringComparison.OrdinalIgnoreCase);
+
+                    return isLocalhost || isAzure || isProduction;
                 }
                 return false;
             })
