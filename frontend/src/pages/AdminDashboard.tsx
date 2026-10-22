@@ -11,11 +11,11 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert, ImageIcon, Megaphone } from 'lucide-react'
+import { Users, DollarSign, Dumbbell, LogOut, ShieldAlert, ImageIcon, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import {useDocumentTitle} from "@/hooks/useDocumentTitle.ts";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle.ts";
 
 // PREDEFINED PREMIUM IMAGES FOR ROOMS AND CLASSES
 const PRESET_FACILITY_IMAGES = [
@@ -79,14 +79,40 @@ interface DashboardStats {
     distribution: SubscriptionDistribution[];
 }
 
+// PAGINATION COMPONENT
+const PaginationControls = ({ currentPage, totalPages, onPageChange }: { currentPage: number, totalPages: number, onPageChange: (p: number) => void }) => {
+    if (totalPages <= 1) return null;
+    return (
+        <div className="flex items-center justify-between px-6 py-3 border-t border-white/5 bg-zinc-900/40">
+            <span className="text-xs text-zinc-500 font-medium">Page {currentPage} of {totalPages}</span>
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-8 bg-zinc-950 border-white/10 text-zinc-300 hover:text-white">
+                    <ChevronLeft size={14} className="mr-1" /> Prev
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="h-8 bg-zinc-950 border-white/10 text-zinc-300 hover:text-white">
+                    Next <ChevronRight size={14} className="ml-1" />
+                </Button>
+            </div>
+        </div>
+    )
+}
+
 export default function AdminDashboard() {
     useDocumentTitle('Dashboard');
-    
+
     const { logout } = useAuth()
     const queryClient = useQueryClient()
 
     // TABS STATE
     const [activeTab, setActiveTab] = React.useState("statistics")
+
+    // PAGINATION STATES
+    const ITEMS_PER_PAGE = 5;
+    const [adminPage, setAdminPage] = React.useState(1);
+    const [coachPage, setCoachPage] = React.useState(1);
+    const [memberPage, setMemberPage] = React.useState(1);
+    const [roomPage, setRoomPage] = React.useState(1);
+    const [classPage, setClassPage] = React.useState(1);
 
     // ROOM STATES
     const [isRoomModalOpen, setIsRoomModalOpen] = React.useState(false)
@@ -125,7 +151,7 @@ export default function AdminDashboard() {
     const [isBroadcastModalOpen, setIsBroadcastModalOpen] = React.useState(false)
     const [broadcastTitle, setBroadcastTitle] = React.useState("")
     const [broadcastMessage, setBroadcastMessage] = React.useState("")
-    
+
     // QUERIES
     const { data: rooms, isLoading: isRoomsLoading } = useQuery<Room[]>({
         queryKey: ['admin-rooms'],
@@ -135,6 +161,11 @@ export default function AdminDashboard() {
     const { data: tiers } = useQuery<SubscriptionTier[]>({
         queryKey: ['subscription-tiers'],
         queryFn: async () => (await api.get('/api/subscriptions/tiers')).data
+    })
+
+    const { data: systemAdmins, isLoading: isAdminsLoading } = useQuery<SystemUser[]>({
+        queryKey: ['admin-users', 'Admin'],
+        queryFn: async () => (await api.get('/api/admin/users?role=Admin')).data
     })
 
     const { data: members, isLoading: isMembersLoading } = useQuery<SystemUser[]>({
@@ -158,6 +189,23 @@ export default function AdminDashboard() {
     })
 
     const pieColors = ['#f97316', '#8b5cf6', '#3b82f6', '#10b981', '#fbbf24', '#ef4444'];
+
+    // DATA SLICING FOR PAGINATION
+    const paginatedAdmins = systemAdmins?.slice((adminPage - 1) * ITEMS_PER_PAGE, adminPage * ITEMS_PER_PAGE) || [];
+    const totalAdminPages = Math.ceil((systemAdmins?.length || 0) / ITEMS_PER_PAGE);
+
+    const paginatedCoaches = systemCoaches?.slice((coachPage - 1) * ITEMS_PER_PAGE, coachPage * ITEMS_PER_PAGE) || [];
+    const totalCoachPages = Math.ceil((systemCoaches?.length || 0) / ITEMS_PER_PAGE);
+
+    const paginatedMembers = members?.slice((memberPage - 1) * ITEMS_PER_PAGE, memberPage * ITEMS_PER_PAGE) || [];
+    const totalMemberPages = Math.ceil((members?.length || 0) / ITEMS_PER_PAGE);
+
+    const paginatedRooms = rooms?.slice((roomPage - 1) * ITEMS_PER_PAGE, roomPage * ITEMS_PER_PAGE) || [];
+    const totalRoomPages = Math.ceil((rooms?.length || 0) / ITEMS_PER_PAGE);
+
+    const paginatedClasses = adminClasses?.slice((classPage - 1) * ITEMS_PER_PAGE, classPage * ITEMS_PER_PAGE) || [];
+    const totalClassPages = Math.ceil((adminClasses?.length || 0) / ITEMS_PER_PAGE);
+
 
     // ROOM MUTATIONS
     const saveRoomMutation = useMutation({
@@ -376,7 +424,6 @@ export default function AdminDashboard() {
             <div className="max-w-6xl mx-auto relative z-10 space-y-10 animate-in fade-in duration-500 pb-12">
                 {/* HEADER */}
                 <div className="flex items-center justify-between border-b border-white/5 pb-6 pt-2 px-2 gap-4">
-                    {/* LEFT SITE: LOGO & WELCOME */}
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="p-2.5 md:p-3 bg-zinc-900/80 rounded-xl border border-white/5 shrink-0">
                             <ShieldAlert className="text-orange-500 w-5 h-5 md:w-6 md:h-6" />
@@ -390,9 +437,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    {/* RIGHT SITE: ACTION BAR */}
                     <div className="flex items-center gap-2 md:gap-4 shrink-0">
-                        {/* BROADCAST */}
                         <Button
                             variant="outline"
                             onClick={() => setIsBroadcastModalOpen(true)}
@@ -401,10 +446,9 @@ export default function AdminDashboard() {
                             <Megaphone size={16} className="md:mr-2" />
                             <span className="hidden md:block">Broadcast</span>
                         </Button>
-                        
+
                         <div className="hidden md:block w-px h-6 bg-white/10 mx-1" />
 
-                        {/* LOG OUT */}
                         <Button
                             variant="ghost"
                             onClick={logout}
@@ -418,7 +462,6 @@ export default function AdminDashboard() {
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col gap-8">
                     <TabsList className="relative flex flex-col sm:flex-row w-full h-auto bg-zinc-900/40 border border-white/5 rounded-2xl p-1.5 gap-1 backdrop-blur-md">
-                        {/* FLOATING BACKGROUND (SLIDER) */}
                         <div className="absolute inset-1.5 pointer-events-none">
                             <div className={`w-full sm:w-[calc((100%-0.75rem)/4)] h-[calc((100%-0.75rem)/4)] sm:h-full bg-zinc-800 rounded-xl shadow-md transition-all duration-500 ease-out
                                 ${activeTab === "statistics" ? "translate-y-0 sm:translate-y-0 sm:translate-x-0" : ""}
@@ -428,7 +471,6 @@ export default function AdminDashboard() {
                             `} />
                         </div>
 
-                        {/* TABS */}
                         <TabsTrigger value="statistics" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Statistics</TabsTrigger>
                         <TabsTrigger value="users" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Users</TabsTrigger>
                         <TabsTrigger value="rooms" className="relative z-10 flex-1 text-sm font-bold rounded-xl data-[state=active]:text-white text-zinc-500 hover:text-zinc-300 py-3 transition-colors duration-300">Rooms</TabsTrigger>
@@ -448,7 +490,6 @@ export default function AdminDashboard() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full">
-                                {/* PIE CHART */}
                                 <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md lg:col-span-2 h-full flex flex-col justify-between shadow-xl outline-none ring-0">
                                     <CardHeader className="p-6 pb-2">
                                         <CardTitle className="text-white">Subscription Distribution</CardTitle>
@@ -483,7 +524,6 @@ export default function AdminDashboard() {
                                     </CardContent>
                                 </Card>
 
-                                {/* KPI TILES */}
                                 <div className="lg:col-span-1 flex flex-col gap-4 h-full justify-between">
                                     <Card className="bg-zinc-900/30 border-white/5 backdrop-blur-md flex-1 flex items-center group hover:bg-zinc-900/50 transition-colors outline-none ring-0">
                                         <CardContent className="p-6 flex items-center gap-5 w-full">
@@ -527,6 +567,46 @@ export default function AdminDashboard() {
 
                     {/* USERS TAB */}
                     <TabsContent value="users" className="w-full focus:outline-none space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+                        {/* ADMINS */}
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold text-white">Administrators</h2>
+                            <div className="bg-zinc-900/30 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-md">
+                                <div className="w-full overflow-x-auto">
+                                    {isAdminsLoading ? (
+                                        <div className="p-8 text-center text-zinc-500 animate-pulse">Loading administrators...</div>
+                                    ) : systemAdmins && systemAdmins.length > 0 ? (
+                                        <>
+                                            <Table className="w-full border-collapse">
+                                                <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                    <TableRow className="border-none hover:bg-transparent">
+                                                        <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
+                                                        <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
+                                                        <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
+                                                        <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {paginatedAdmins.map((admin) => (
+                                                        <TableRow key={admin.id} className="border-b border-white/5 hover:bg-zinc-900/60 transition-colors">
+                                                            <TableCell className="font-semibold text-white">{admin.firstName} {admin.lastName}</TableCell>
+                                                            <TableCell className="text-zinc-400 text-sm">{admin.email}</TableCell>
+                                                            <TableCell>
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-orange-500/10 text-orange-400 border border-orange-500/20">Admin</span>
+                                                            </TableCell>
+                                                            <TableCell className="text-right space-x-2">
+                                                                <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(admin)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                            <PaginationControls currentPage={adminPage} totalPages={totalAdminPages} onPageChange={setAdminPage} />
+                                        </>
+                                    ) : <div className="p-8 text-center text-zinc-500 font-medium">No administrators found.</div>}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* TRAINERS */}
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -543,37 +623,40 @@ export default function AdminDashboard() {
                                     {isCoachesLoading ? (
                                         <div className="p-8 text-center text-zinc-500 animate-pulse">Loading staff...</div>
                                     ) : systemCoaches && systemCoaches.length > 0 ? (
-                                        <Table className="w-full border-collapse">
-                                            <TableHeader className="bg-zinc-900/60 border-b border-white/5">
-                                                <TableRow className="border-none hover:bg-transparent">
-                                                    <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
-                                                    <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
-                                                    <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
-                                                    <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {systemCoaches.map((coach) => (
-                                                    <TableRow key={coach.id} className={`border-b border-white/5 transition-colors ${!coach.isActive ? "bg-zinc-950/50 opacity-60" : "hover:bg-zinc-900/60"}`}>
-                                                        <TableCell className="font-semibold text-white">{coach.firstName} {coach.lastName}</TableCell>
-                                                        <TableCell className="text-zinc-400 text-sm">{coach.email}</TableCell>
-                                                        <TableCell>
-                                                            {coach.isActive ? (
-                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
-                                                            ) : (
-                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Disabled</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-right space-x-2">
-                                                            <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(coach)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
-                                                            <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate(coach.id)} className={coach.isActive ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}>
-                                                                {coach.isActive ? "Disable" : "Enable"}
-                                                            </Button>
-                                                        </TableCell>
+                                        <>
+                                            <Table className="w-full border-collapse">
+                                                <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                    <TableRow className="border-none hover:bg-transparent">
+                                                        <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
+                                                        <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
+                                                        <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
+                                                        <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {paginatedCoaches.map((coach) => (
+                                                        <TableRow key={coach.id} className={`border-b border-white/5 transition-colors ${!coach.isActive ? "bg-zinc-950/50 opacity-60" : "hover:bg-zinc-900/60"}`}>
+                                                            <TableCell className="font-semibold text-white">{coach.firstName} {coach.lastName}</TableCell>
+                                                            <TableCell className="text-zinc-400 text-sm">{coach.email}</TableCell>
+                                                            <TableCell>
+                                                                {coach.isActive ? (
+                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
+                                                                ) : (
+                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Disabled</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-right space-x-2">
+                                                                <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(coach)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
+                                                                <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate(coach.id)} className={coach.isActive ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}>
+                                                                    {coach.isActive ? "Disable" : "Enable"}
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                            <PaginationControls currentPage={coachPage} totalPages={totalCoachPages} onPageChange={setCoachPage} />
+                                        </>
                                     ) : <div className="p-8 text-center text-zinc-500 font-medium">No trainers registered.</div>}
                                 </div>
                             </div>
@@ -587,37 +670,40 @@ export default function AdminDashboard() {
                                     {isMembersLoading ? (
                                         <div className="p-8 text-center text-zinc-500 animate-pulse">Loading members...</div>
                                     ) : members && members.length > 0 ? (
-                                        <Table className="w-full border-collapse">
-                                            <TableHeader className="bg-zinc-900/60 border-b border-white/5">
-                                                <TableRow className="border-none hover:bg-transparent">
-                                                    <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
-                                                    <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
-                                                    <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
-                                                    <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {members.map((member) => (
-                                                    <TableRow key={member.id} className={`border-b border-white/5 transition-colors ${!member.isActive ? "bg-zinc-950/50 opacity-60" : "hover:bg-zinc-900/60"}`}>
-                                                        <TableCell className="font-semibold text-white">{member.firstName} {member.lastName}</TableCell>
-                                                        <TableCell className="text-zinc-400 text-sm">{member.email}</TableCell>
-                                                        <TableCell>
-                                                            {member.isActive ? (
-                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
-                                                            ) : (
-                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Banned</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-right space-x-2">
-                                                            <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(member)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
-                                                            <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate(member.id)} className={member.isActive ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}>
-                                                                {member.isActive ? "Ban" : "Unban"}
-                                                            </Button>
-                                                        </TableCell>
+                                        <>
+                                            <Table className="w-full border-collapse">
+                                                <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                    <TableRow className="border-none hover:bg-transparent">
+                                                        <TableHead className="w-[30%] font-bold text-zinc-400">Name</TableHead>
+                                                        <TableHead className="w-[35%] font-bold text-zinc-400">Email</TableHead>
+                                                        <TableHead className="w-[15%] font-bold text-zinc-400">Status</TableHead>
+                                                        <TableHead className="w-[20%] text-right font-bold text-zinc-400">Actions</TableHead>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {paginatedMembers.map((member) => (
+                                                        <TableRow key={member.id} className={`border-b border-white/5 transition-colors ${!member.isActive ? "bg-zinc-950/50 opacity-60" : "hover:bg-zinc-900/60"}`}>
+                                                            <TableCell className="font-semibold text-white">{member.firstName} {member.lastName}</TableCell>
+                                                            <TableCell className="text-zinc-400 text-sm">{member.email}</TableCell>
+                                                            <TableCell>
+                                                                {member.isActive ? (
+                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
+                                                                ) : (
+                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">Banned</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-right space-x-2">
+                                                                <Button variant="ghost" size="sm" onClick={() => handleOpenEditUser(member)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
+                                                                <Button variant="ghost" size="sm" onClick={() => toggleStatusMutation.mutate(member.id)} className={member.isActive ? "text-red-400 hover:text-red-300 hover:bg-red-500/10" : "text-green-400 hover:text-green-300 hover:bg-green-500/10"}>
+                                                                    {member.isActive ? "Ban" : "Unban"}
+                                                                </Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                            <PaginationControls currentPage={memberPage} totalPages={totalMemberPages} onPageChange={setMemberPage} />
+                                        </>
                                     ) : <div className="p-8 text-center text-zinc-500 font-medium">No members registered yet.</div>}
                                 </div>
                             </div>
@@ -644,64 +730,67 @@ export default function AdminDashboard() {
                                 {isRoomsLoading ? (
                                     <div className="p-8 text-center text-zinc-500 animate-pulse">Loading rooms...</div>
                                 ) : rooms && rooms.length > 0 ? (
-                                    <Table className="w-full border-collapse">
-                                        <TableHeader className="bg-zinc-900/60 border-b border-white/5">
-                                            <TableRow className="border-none hover:bg-transparent">
-                                                <TableHead className="font-bold text-zinc-400">Room Name</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Capacity</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Access Level</TableHead>
-                                                <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {rooms.map((room) => (
-                                                <TableRow key={room.id} className="border-b border-white/5 hover:bg-zinc-900/60 transition-colors">
-                                                    <TableCell className="font-semibold text-white flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
-                                                            {room.imageUrl ? <img src={room.imageUrl} alt="room" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
-                                                        </div>
-                                                        {room.name}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-zinc-800 text-zinc-300 border border-white/5">{room.maxCapacity} people</span>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {room.requiredTierName ? (
-                                                            <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">{room.requiredTierName} Only</span>
-                                                        ) : (
-                                                            <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">All Members</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="text-right space-x-2">
-                                                        <Button variant="ghost" size="sm" onClick={() => handleOpenEditModal(room)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
-
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Delete Facility Room</AlertDialogTitle>
-                                                                    <AlertDialogDescription className="text-zinc-400">
-                                                                        Are you sure you want to delete <strong className="text-white">{room.name}</strong>? This action cannot be undone.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction
-                                                                        onClick={() => deleteRoomMutation.mutate(room.id)}
-                                                                        className="bg-red-600 hover:bg-red-700 text-white border-none"
-                                                                    >
-                                                                        Yes, delete room
-                                                                    </AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
-                                                    </TableCell>
+                                    <>
+                                        <Table className="w-full border-collapse">
+                                            <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                <TableRow className="border-none hover:bg-transparent">
+                                                    <TableHead className="font-bold text-zinc-400">Room Name</TableHead>
+                                                    <TableHead className="font-bold text-zinc-400">Capacity</TableHead>
+                                                    <TableHead className="font-bold text-zinc-400">Access Level</TableHead>
+                                                    <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {paginatedRooms.map((room) => (
+                                                    <TableRow key={room.id} className="border-b border-white/5 hover:bg-zinc-900/60 transition-colors">
+                                                        <TableCell className="font-semibold text-white flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
+                                                                {room.imageUrl ? <img src={room.imageUrl} alt="room" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
+                                                            </div>
+                                                            {room.name}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-zinc-800 text-zinc-300 border border-white/5">{room.maxCapacity} people</span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {room.requiredTierName ? (
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">{room.requiredTierName} Only</span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">All Members</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-right space-x-2">
+                                                            <Button variant="ghost" size="sm" onClick={() => handleOpenEditModal(room)} className="text-zinc-300 hover:text-white hover:bg-zinc-800">Edit</Button>
+
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Delete</Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Delete Facility Room</AlertDialogTitle>
+                                                                        <AlertDialogDescription className="text-zinc-400">
+                                                                            Are you sure you want to delete <strong className="text-white">{room.name}</strong>? This action cannot be undone.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Cancel</AlertDialogCancel>
+                                                                        <AlertDialogAction
+                                                                            onClick={() => deleteRoomMutation.mutate(room.id)}
+                                                                            className="bg-red-600 hover:bg-red-700 text-white border-none"
+                                                                        >
+                                                                            Yes, delete room
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                        <PaginationControls currentPage={roomPage} totalPages={totalRoomPages} onPageChange={setRoomPage} />
+                                    </>
                                 ) : (
                                     <div className="p-8 text-center text-zinc-500 font-medium">No rooms configured yet. Add your first room!</div>
                                 )}
@@ -729,75 +818,78 @@ export default function AdminDashboard() {
                                 {isClassesLoading ? (
                                     <div className="p-8 text-center text-zinc-500 animate-pulse">Loading schedule...</div>
                                 ) : adminClasses && adminClasses.length > 0 ? (
-                                    <Table className="w-full border-collapse">
-                                        <TableHeader className="bg-zinc-900/60 border-b border-white/5">
-                                            <TableRow className="border-none hover:bg-transparent">
-                                                <TableHead className="font-bold text-zinc-400">Class Name</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Time</TableHead>
-                                                <TableHead className="font-bold text-zinc-400">Coach & Room</TableHead>
-                                                <TableHead className="font-bold text-zinc-400 text-center">Enrollment</TableHead>
-                                                <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {adminClasses.map((cls) => {
-                                                const room = rooms?.find(r => r.name === cls.roomName);
-                                                const imageUrl = cls.imageUrl || room?.imageUrl;
-                                                return (
-                                                    <TableRow key={cls.id} className={`border-b border-white/5 transition-colors ${cls.isCancelled ? "bg-zinc-950/50 opacity-50" : "hover:bg-zinc-900/60"}`}>
-                                                        <TableCell className="font-semibold text-white flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
-                                                                {imageUrl ? <img src={imageUrl} alt="class" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
-                                                            </div>
-                                                            {cls.name} {cls.isCancelled && <span className="text-red-500 text-[10px] ml-2 font-black tracking-wider uppercase">Cancelled</span>}
-                                                        </TableCell>
-                                                        <TableCell className="text-zinc-400 text-xs font-medium">
-                                                            {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
-                                                            {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.coachName} • {cls.roomName}</span>
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="inline-flex items-center justify-center gap-2">
-                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                                    {cls.currentBookings} / {cls.maxAttendees}
-                                                                </span>
-                                                                {cls.waitlistCount > 0 && (
-                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.15)] whitespace-nowrap">
-                                                                        + {cls.waitlistCount}
+                                    <>
+                                        <Table className="w-full border-collapse">
+                                            <TableHeader className="bg-zinc-900/60 border-b border-white/5">
+                                                <TableRow className="border-none hover:bg-transparent">
+                                                    <TableHead className="font-bold text-zinc-400">Class Name</TableHead>
+                                                    <TableHead className="font-bold text-zinc-400">Time</TableHead>
+                                                    <TableHead className="font-bold text-zinc-400">Coach & Room</TableHead>
+                                                    <TableHead className="font-bold text-zinc-400 text-center">Enrollment</TableHead>
+                                                    <TableHead className="text-right font-bold text-zinc-400">Actions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {paginatedClasses.map((cls) => {
+                                                    const room = rooms?.find(r => r.name === cls.roomName);
+                                                    const imageUrl = cls.imageUrl || room?.imageUrl;
+                                                    return (
+                                                        <TableRow key={cls.id} className={`border-b border-white/5 transition-colors ${cls.isCancelled ? "bg-zinc-950/50 opacity-50" : "hover:bg-zinc-900/60"}`}>
+                                                            <TableCell className="font-semibold text-white flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-md overflow-hidden bg-zinc-800 shrink-0 border border-white/5">
+                                                                    {imageUrl ? <img src={imageUrl} alt="class" className="w-full h-full object-cover" /> : <ImageIcon className="w-full h-full p-2 text-zinc-600" />}
+                                                                </div>
+                                                                {cls.name} {cls.isCancelled && <span className="text-red-500 text-[10px] ml-2 font-black tracking-wider uppercase">Cancelled</span>}
+                                                            </TableCell>
+                                                            <TableCell className="text-zinc-400 text-xs font-medium">
+                                                                {new Date(cls.startTime).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} -
+                                                                {new Date(cls.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-400 border border-white/5">{cls.coachName} • {cls.roomName}</span>
+                                                            </TableCell>
+                                                            <TableCell className="text-center">
+                                                                <div className="inline-flex items-center justify-center gap-2">
+                                                                    <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                                                        {cls.currentBookings} / {cls.maxAttendees}
                                                                     </span>
+                                                                    {cls.waitlistCount > 0 && (
+                                                                        <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.15)] whitespace-nowrap">
+                                                                            + {cls.waitlistCount}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                {!cls.isCancelled && (
+                                                                    <AlertDialog>
+                                                                        <AlertDialogTrigger asChild>
+                                                                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Cancel</Button>
+                                                                        </AlertDialogTrigger>
+                                                                        <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
+                                                                            <AlertDialogHeader>
+                                                                                <AlertDialogTitle>Cancel Class</AlertDialogTitle>
+                                                                                <AlertDialogDescription className="text-zinc-400">
+                                                                                    Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.
+                                                                                </AlertDialogDescription>
+                                                                            </AlertDialogHeader>
+                                                                            <AlertDialogFooter>
+                                                                                <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
+                                                                                <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-red-600 hover:bg-red-700 text-white border-none">
+                                                                                    Yes, cancel class
+                                                                                </AlertDialogAction>
+                                                                            </AlertDialogFooter>
+                                                                        </AlertDialogContent>
+                                                                    </AlertDialog>
                                                                 )}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {!cls.isCancelled && (
-                                                                <AlertDialog>
-                                                                    <AlertDialogTrigger asChild>
-                                                                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">Cancel</Button>
-                                                                    </AlertDialogTrigger>
-                                                                    <AlertDialogContent className="bg-zinc-950 border border-white/10 text-white">
-                                                                        <AlertDialogHeader>
-                                                                            <AlertDialogTitle>Cancel Class</AlertDialogTitle>
-                                                                            <AlertDialogDescription className="text-zinc-400">
-                                                                                Are you sure you want to cancel this session? Enrolled members will silently lose it from their schedule.
-                                                                            </AlertDialogDescription>
-                                                                        </AlertDialogHeader>
-                                                                        <AlertDialogFooter>
-                                                                            <AlertDialogCancel className="bg-zinc-900 text-white hover:bg-zinc-800 border-white/10">Keep it</AlertDialogCancel>
-                                                                            <AlertDialogAction onClick={() => deleteClassMutation.mutate(cls.id)} className="bg-red-600 hover:bg-red-700 text-white border-none">
-                                                                                Yes, cancel class
-                                                                            </AlertDialogAction>
-                                                                        </AlertDialogFooter>
-                                                                    </AlertDialogContent>
-                                                                </AlertDialog>
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            })}
-                                        </TableBody>
-                                    </Table>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )
+                                                })}
+                                            </TableBody>
+                                        </Table>
+                                        <PaginationControls currentPage={classPage} totalPages={totalClassPages} onPageChange={setClassPage} />
+                                    </>
                                 ) : (
                                     <div className="p-8 text-center text-zinc-500 font-medium">No classes scheduled yet. Create your first session!</div>
                                 )}
@@ -806,7 +898,7 @@ export default function AdminDashboard() {
                     </TabsContent>
                 </Tabs>
             </div>
-            
+
             {/* ROOM MODAL */}
             <Dialog open={isRoomModalOpen} onOpenChange={setIsRoomModalOpen}>
                 <DialogContent className="sm:max-w-[500px] bg-zinc-950 border border-white/10 text-zinc-100 max-h-[90vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
