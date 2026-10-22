@@ -86,10 +86,22 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange }: { current
         <div className="flex items-center justify-between px-6 py-3 border-t border-white/5 bg-zinc-900/40">
             <span className="text-xs text-zinc-500 font-medium">Page {currentPage} of {totalPages}</span>
             <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="h-8 bg-zinc-950 border-white/10 text-zinc-300 hover:text-white">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3 rounded-lg border border-white/5 bg-zinc-950/50 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-white/10 transition-all duration-300"
+                >
                     <ChevronLeft size={14} className="mr-1" /> Prev
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="h-8 bg-zinc-950 border-white/10 text-zinc-300 hover:text-white">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3 rounded-lg border border-white/5 bg-zinc-950/50 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-white/10 transition-all duration-300"
+                >
                     Next <ChevronRight size={14} className="ml-1" />
                 </Button>
             </div>
@@ -107,7 +119,7 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = React.useState("statistics")
 
     // PAGINATION STATES
-    const ITEMS_PER_PAGE = 5;
+    const ITEMS_PER_PAGE = 10;
     const [adminPage, setAdminPage] = React.useState(1);
     const [coachPage, setCoachPage] = React.useState(1);
     const [memberPage, setMemberPage] = React.useState(1);
